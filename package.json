@@ -1,6 +1,6 @@
 {
   "name": "ha-utility-cards",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Home Assistant cards to add more functionality to dashboards",
   "scripts": {
     "start": "node .esbuild.js --watch --dev",
