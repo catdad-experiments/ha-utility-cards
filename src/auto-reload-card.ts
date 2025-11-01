@@ -24,7 +24,8 @@ type Config = LovelaceCardConfig & {
   debug_only_with_info?: boolean;
 };
 
-const minute = 1000 * 60;
+const second = 1000;
+const minute = second * 60;
 
 export const card = {
   type: NAME,
@@ -112,7 +113,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
       if (toast?.innerText.toLowerCase() === 'refresh') {
         this.refreshFromUpdate();
       }
-    }, 3000);
+    }, second * 5);
 
     } catch (e) {
       LOG(`failed to connect ${NAME}`, e);
@@ -215,7 +216,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
     location.reload();
   }
 
-  private async ensureNetworkAccess(sleepTime: number = 2000, issueDetected: boolean = false): Promise<boolean> {
+  private async ensureNetworkAccess(sleepTime: number = second * 10, issueDetected: boolean = false): Promise<boolean> {
     if (!lastScriptSrcAtLoad) {
       LOG('cannot confirm HA is online, could not find a url to check');
       return false;
@@ -235,7 +236,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
       });
     } catch (e) {
       await sleep(sleepTime);
-      return await this.ensureNetworkAccess(sleepTime + 1000, true);
+      return await this.ensureNetworkAccess(sleepTime + (second * 5), true);
     }
 
     return issueDetected;
