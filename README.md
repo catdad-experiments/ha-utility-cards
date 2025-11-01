@@ -10,6 +10,7 @@ In HACS, add the repo `https://github.com/catdad-experiments/ha-utility-cards` a
 
 * [`combined-card`](#combined-card)
 * [`kiosk-card`](#kiosk-card)
+* [`catdad-auto-reload-card`](#auto-reload-card)
 
 ## Combined Card
 
@@ -36,3 +37,12 @@ If this is too undefined for you, you can combine the cards more granularly, in 
 A card that will hide the dashboard header bar. I recommend using it with something like [`navbar-card`](https://github.com/joseluis9595/lovelace-navbar-card) so that you can still navigate around your dashboard.
 
 This card will only work if it is rendered. This means that you can use Home Assistant's built-in visibility tab to add rules for when the card is rendered (e.g. for specific users, at specific times, as a result of specific states, etc.).
+
+## Auto Reload Card
+
+This card monitors your dashboard and automatically reloads it if it detects:
+* that dashboard entities are no longer updates (i.e. the dashboard has become disconnected from the server)
+* it detects and recovers from a network outage (i.e. I restart my wifi on a timer every night)
+* it detects that there is a dashboard update (you no longer have to walk around your house and hit the "Refresh" button when you make an update to wallpanels!)
+
+By default, this card does not render anything on the dashboard, though you can enable debug mode to see a record of what this card has detected and recovered from.
