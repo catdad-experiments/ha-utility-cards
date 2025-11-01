@@ -1,7 +1,7 @@
 import { css, CSSResultGroup, html, LitElement } from "lit";
 import { state } from "lit/decorators.js";
 import { querySelectorDeep } from "query-selector-shadow-dom";
-import { HomeAssistant, LovelaceCardConfig, LovelaceCard } from 'custom-card-helpers';
+import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
 import { LOG } from './utils';
 
 const NAME = 'kiosk-card';
@@ -34,7 +34,7 @@ class KioskCard extends LitElement implements LovelaceCard {
   }
 
   public async getCardSize(): Promise<number> {
-    return 4;
+    return this._editMode ? 4 : 0;
   }
 
   public setConfig(config: LovelaceCardConfig): void {

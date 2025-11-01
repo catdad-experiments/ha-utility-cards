@@ -1,5 +1,5 @@
 import { html, LitElement } from "lit";
-import { HomeAssistant, LovelaceCardConfig, LovelaceCardEditor, LovelaceConfig } from 'custom-card-helpers';
+import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCardEditor, type LovelaceConfig } from 'custom-card-helpers';
 import { LOG_EDITOR as LOG } from './utils';
 
 export const editorFactory = (NAME: string) => {

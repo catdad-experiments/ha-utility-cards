@@ -1,6 +1,6 @@
 import { css, CSSResultGroup, html, LitElement } from 'lit';
 import { state } from 'lit/decorators.js';
-import { HomeAssistant, LovelaceCardConfig, LovelaceCard } from 'custom-card-helpers';
+import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
 import { HELPERS, LOG, loadStackEditor, sleep } from './utils';
 
 import { editorFactory } from "./combined-card-editor";
