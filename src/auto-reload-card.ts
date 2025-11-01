@@ -348,6 +348,20 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
             return undefined;
         }
       },
+      computeHelper: (schema) => {
+        switch (schema.name){
+          case 'entity':
+            return [
+              'Pick an entity to track in order to detect connection issues.',
+              'This entity should update often, so that issues can be detected reliably.',
+              'If you are unsure, I suggest `sensor.time` which updates once every minute.',
+              'The value of this entity will not be shown anywhere.'
+            ].join('\n');
+          default:
+            return undefined;
+        }
+
+      }
     };
   }
 
