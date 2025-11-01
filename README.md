@@ -40,8 +40,8 @@ This card will only work if it is rendered. This means that you can use Home Ass
 
 ## Auto Reload Card
 
-This card monitors your dashboard and automatically reloads it if it detects:
-* that dashboard entities are no longer updates (i.e. the dashboard has become disconnected from the server)
+This card monitors your dashboard and automatically reloads it if:
+* it detects that dashboard entities are no longer updates (i.e. the dashboard has become disconnected from the server)
 * it detects and recovers from a network outage (i.e. I restart my wifi on a timer every night)
 * it detects that there is a dashboard update (you no longer have to walk around your house and hit the "Refresh" button when you make an update to wallpanels!)
 
