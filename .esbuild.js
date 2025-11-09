@@ -1,5 +1,7 @@
 const path = require('path');
 const { promises: fs } = require('fs');
+const { gzip } = require('zlib');
+const { promisify } = require('util');
 
 const esbuild = require('esbuild');
 
@@ -11,11 +13,17 @@ const verbose = process.argv.includes('--verbose');
 
 const outname = `utility-cards.js`;
 
+const createGzip = promisify(gzip);
+
 const writeOutput = async file => {
   await fs.writeFile(path.resolve(OUTDIR, outname), file.contents);
 
   if (dev) {
-    await fs.writeFile(`P:/homeassistant/www/community/ha-utility-cards/${outname}`, file.contents);
+    const remoteDir = `P:/homeassistant/www/community/ha-utility-cards`;
+    await fs.writeFile(`${remoteDir}/${outname}`, file.contents);
+    await fs.writeFile(`${remoteDir}/${outname}.gz`, await createGzip(file.contents));
+
+    // TODO modily P:/homeassistant/.storage/lovelace_resources
   }
 };
 
