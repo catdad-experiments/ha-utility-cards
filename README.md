@@ -11,6 +11,7 @@ In HACS, add the repo `https://github.com/catdad-experiments/ha-utility-cards` a
 * [`combined-card`](#combined-card)
 * [`kiosk-card`](#kiosk-card)
 * [`catdad-auto-reload-card`](#auto-reload-card)
+* [`catdad-back-button-card`](#back-button-card)
 
 ## Combined Card
 
@@ -46,3 +47,11 @@ This card monitors your dashboard and automatically reloads it if:
 * it detects that there is a dashboard update (you no longer have to walk around your house and hit the "Refresh" button when you make an update to wallpanels!)
 
 By default, this card does not render anything on the dashboard, though you can enable debug mode to see a record of what this card has detected and recovered from.
+
+## Back Button Card
+
+This card is a button that navigates back in the browser -- acts just like clicking your browser's back button or swiping back on Android, except as a card on any dashboard usable on any device. You can use Home Assistant's built-in visibility settings to control when the card is rendered.
+
+<img width="248" height="71" alt="image" src="https://github.com/user-attachments/assets/02c75464-206b-440b-9ef4-666f3e96b19a" />
+
+You can customize the icon and text on this card through the visual editor.
