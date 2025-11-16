@@ -105,7 +105,6 @@ class BackButtonCard extends LitElement implements LovelaceCard {
     return {
       schema: [
         { name: "text", selector: { text: {} } },
-        // { name: "entity", required: true, selector: { entity: {} } },
         {
           type: "grid",
           name: "",
