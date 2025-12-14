@@ -13,9 +13,6 @@ type Config = LovelaceCardConfig & {
   debug?: boolean;
 };
 
-const second = 1000;
-const minute = second * 60;
-
 export const card = {
   type: NAME,
   name: 'Catdad: Auto Light/Dark Mode Card',
