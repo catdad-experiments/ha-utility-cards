@@ -1,8 +1,9 @@
 import { css, CSSResultGroup, html, LitElement } from "lit";
 import { state } from "lit/decorators.js";
+import { match } from "ts-pattern";
 import { querySelectorDeep } from "query-selector-shadow-dom";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
-import { type Interval, type Timer, LOG, isDate, isNumber, sleep } from './utils';
+import { LOG } from './utils';
 
 const NAME = 'catdad-auto-light-dark-mode-card' as const;
 
@@ -59,6 +60,36 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
     LOG('light/dark mode card unmounted');
   }
 
+  private getMainElement(): HTMLElement | null {
+    return querySelectorDeep('home-assistant') || querySelectorDeep('hc-main') || null;
+  }
+
+  private dispatch(mode: 'light' | 'dark' | 'auto'): void {
+    const detail = match(mode)
+      .with('auto', () => ({ dark: undefined }))
+      .with('dark', () => ({ dark: true }))
+      .with('light', () => ({ dark: false }))
+      .exhaustive();
+
+    const root = this.getMainElement();
+
+    if (root) {
+      root.dispatchEvent(new CustomEvent('settheme', { detail }));
+    }
+  }
+
+  private setDarkMode(): void {
+    this.dispatch('dark');
+  }
+
+  private setLightMode(): void {
+    this.dispatch('light');
+  }
+
+  private setAutoMode(): void {
+    this.dispatch('auto');
+  }
+
   protected render() {
     const styles = [
       'padding: var(--spacing, 12px)',
@@ -77,11 +108,19 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
 
     const debugElem = this._debug
       ? html`
-          <ha-control-button style="width: 100%" @click="${() => {
-            console.log('click');
-          }}">
-            <button type="button" class="button">Button</button>
-          </ha-control-button>
+          <div class="row">
+            <ha-control-button style="width: 100%" @click="${this.setAutoMode}">
+              <button type="button" class="button">Auto</button>
+            </ha-control-button>
+
+            <ha-control-button style="width: 100%" @click="${this.setLightMode}">
+              <button type="button" class="button">Light</button>
+            </ha-control-button>
+
+            <ha-control-button style="width: 100%" @click="${this.setDarkMode}">
+              <button type="button" class="button">Dark</button>
+            </ha-control-button>
+          </div>
         `
       : null;
 
@@ -99,6 +138,12 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
     return css`
       ha-card {
         overflow: hidden;
+      }
+
+      .row {
+        display: flex;
+        gap: 0.5rem;
+        width: 100%;
       }
 
       .button {
@@ -137,7 +182,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
         }
       },
       computeHelper: (schema) => {
-        switch (schema.name){
+        switch (schema.name) {
           default:
             return undefined;
         }

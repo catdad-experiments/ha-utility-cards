@@ -11,7 +11,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "query-selector-shadow-dom": "^1.0.1"
+    "query-selector-shadow-dom": "^1.0.1",
+    "ts-pattern": "^5.9.0"
   },
   "devDependencies": {
     "@types/query-selector-shadow-dom": "^1.0.4",
