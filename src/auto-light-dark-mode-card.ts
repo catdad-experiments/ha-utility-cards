@@ -183,7 +183,6 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
           default:
             return undefined;
         }
-
       }
     };
   }
