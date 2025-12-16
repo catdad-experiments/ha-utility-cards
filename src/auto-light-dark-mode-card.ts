@@ -18,6 +18,8 @@ type Config = LovelaceCardConfig & {
   restoreTo?: Mode;
 };
 
+const isMode = (value: any): value is Mode => value === 'auto' || value === 'dark' || value === 'light';
+
 export const card = {
   type: NAME,
   name: 'Catdad: Auto Light/Dark Mode Card',
@@ -65,7 +67,10 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
     this.disconnect();
 
     this._templateUnsubscribe = await subscribeRenderTemplate(connection, result => {
-      console.log('template rendered', result);
+      console.log('template rendered:', result);
+      if (isMode(result.result)) {
+        this.setMode(result.result);
+      }
     }, {
       template,
     });
@@ -88,6 +93,12 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
     super.disconnectedCallback();
     LOG('light/dark mode card unmounted');
     this.disconnect();
+
+    const resoteTo = this._config?.restoreTo;
+
+    if (resoteTo && this.currentMode && resoteTo !== this.currentMode) {
+      this.setMode(resoteTo);
+    }
   }
 
   private getMainElement(): HTMLElement | null {
@@ -109,15 +120,26 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
   }
 
   private setDarkMode(): void {
+    this.currentMode = 'dark';
     this.dispatch('dark');
   }
 
   private setLightMode(): void {
+    this.currentMode = 'light';
     this.dispatch('light');
   }
 
   private setAutoMode(): void {
+    this.currentMode = 'auto';
     this.dispatch('auto');
+  }
+
+  private setMode(mode: Mode): void {
+    match(mode)
+      .with('auto', () => this.setAutoMode())
+      .with('dark', () => this.setDarkMode())
+      .with('light', () => this.setLightMode())
+      .exhaustive();
   }
 
   protected render() {
