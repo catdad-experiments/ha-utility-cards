@@ -1,16 +1,21 @@
-import { css, CSSResultGroup, html, LitElement } from "lit";
-import { state } from "lit/decorators.js";
-import { match } from "ts-pattern";
-import { querySelectorDeep } from "query-selector-shadow-dom";
+import { css, CSSResultGroup, html, LitElement } from 'lit';
+import { state } from 'lit/decorators.js';
+import { match } from 'ts-pattern';
+import { querySelectorDeep } from 'query-selector-shadow-dom';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
 import { LOG } from './utils';
+import { type Connection, type UnsubscribeFunc, subscribeRenderTemplate } from './template-subscriber';
 
 const NAME = 'catdad-auto-light-dark-mode-card' as const;
+
+type Mode = 'auto' | 'light' | 'dark';
 
 type Config = LovelaceCardConfig & {
   type: `custom:${typeof NAME}`;
   // HA doesn't seem to assert the `required` properties
   debug?: boolean;
+  template?: string;
+  restoreTo?: Mode;
 };
 
 export const card = {
@@ -23,8 +28,10 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
   @state() private _config?: Config;
   @state() private _editMode: boolean = false;
   @state() private _debug: boolean = false;
+  @state() private currentMode: Mode | null = null;
 
   private _hass?: HomeAssistant;
+  private _templateUnsubscribe?: UnsubscribeFunc;
 
   set hass(hass: HomeAssistant) {
     this._hass = hass;
@@ -47,14 +54,40 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
     return this._debug || this._editMode;
   }
 
+  private async connect(): Promise<void> {
+    const connection = this._hass?.connection as any as Connection | undefined;
+    const template = this._config?.template;
+
+    if (!connection || !template) {
+      return;
+    }
+
+    this.disconnect();
+
+    this._templateUnsubscribe = await subscribeRenderTemplate(connection, result => {
+      console.log('template rendered', result);
+    }, {
+      template,
+    });
+  }
+
+  private disconnect(): void {
+    if (this._templateUnsubscribe) {
+      this._templateUnsubscribe();
+      this._templateUnsubscribe = undefined;
+    }
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
     LOG('light/dark mode card mounted');
+    this.connect();
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     LOG('light/dark mode card unmounted');
+    this.disconnect();
   }
 
   private getMainElement(): HTMLElement | null {
@@ -168,18 +201,43 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
   public static getConfigForm() {
     return {
       schema: [
-        { name: 'debug', selector: { boolean: {} } },
+        {
+          name: 'template',
+          required: true,
+          selector: { template: {} }
+        },
+        {
+          name: 'restoreTo',
+          required: true,
+          selector: {
+            select: {
+              mode: 'box',
+              options: (['auto', 'light', 'dark'] as Mode[])
+                .map((value) => ({ label: value, value })),
+            }
+          }
+        },
+        {
+          name: 'debug',
+          selector: { boolean: {} }
+        },
       ],
       computeLabel: (schema) => {
         switch (schema.name) {
           case 'debug':
             return 'Render card with manual controls over theme mode';
+          case 'restoreTo':
+            return 'Restore to *';
+          case 'template':
+            return 'Template ';
           default:
             return undefined;
         }
       },
       computeHelper: (schema) => {
         switch (schema.name) {
+          case 'template':
+            return 'The template should resolve to one of: auto, light, dark';
           default:
             return undefined;
         }
@@ -190,6 +248,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
   static getStubConfig(): Partial<Config> & Pick<Config, 'type'> {
     return {
       type: `custom:${NAME}`,
+      restoreTo: 'auto',
     };
   }
 }
