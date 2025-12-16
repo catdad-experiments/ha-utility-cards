@@ -85,13 +85,13 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
 
   connectedCallback(): void {
     super.connectedCallback();
-    LOG('light/dark mode card mounted');
+    LOG('light/dark mode card mounted', this._editMode ? 'in edit mode' : '');
     this.connect();
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    LOG('light/dark mode card unmounted');
+    LOG('light/dark mode card unmounted', this._editMode ? 'in edit mode' : '');
     this.disconnect();
 
     const resoteTo = this._config?.restoreTo;
