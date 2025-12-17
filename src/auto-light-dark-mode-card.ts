@@ -20,6 +20,24 @@ type Config = LovelaceCardConfig & {
 
 const isMode = (value: any): value is Mode => value === 'auto' || value === 'dark' || value === 'light';
 
+const getMainElement = (): HTMLElement | null => {
+  return querySelectorDeep('home-assistant') || querySelectorDeep('hc-main') || null;
+}
+
+const dispatch = (mode: Mode): void => {
+  const detail = match(mode)
+    .with('auto', () => ({ dark: undefined }))
+    .with('dark', () => ({ dark: true }))
+    .with('light', () => ({ dark: false }))
+    .exhaustive();
+
+  const root = getMainElement();
+
+  if (root) {
+    root.dispatchEvent(new CustomEvent('settheme', { detail }));
+  }
+}
+
 export const card = {
   type: NAME,
   name: 'Catdad: Auto Light/Dark Mode Card',
@@ -101,37 +119,19 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
     }
   }
 
-  private getMainElement(): HTMLElement | null {
-    return querySelectorDeep('home-assistant') || querySelectorDeep('hc-main') || null;
-  }
-
-  private dispatch(mode: 'light' | 'dark' | 'auto'): void {
-    const detail = match(mode)
-      .with('auto', () => ({ dark: undefined }))
-      .with('dark', () => ({ dark: true }))
-      .with('light', () => ({ dark: false }))
-      .exhaustive();
-
-    const root = this.getMainElement();
-
-    if (root) {
-      root.dispatchEvent(new CustomEvent('settheme', { detail }));
-    }
-  }
-
   private setDarkMode(): void {
     this.currentMode = 'dark';
-    this.dispatch('dark');
+    dispatch('dark');
   }
 
   private setLightMode(): void {
     this.currentMode = 'light';
-    this.dispatch('light');
+    dispatch('light');
   }
 
   private setAutoMode(): void {
     this.currentMode = 'auto';
-    this.dispatch('auto');
+    dispatch('auto');
   }
 
   private setMode(mode: Mode): void {
