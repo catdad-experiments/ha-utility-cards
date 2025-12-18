@@ -1,4 +1,4 @@
-import { css, CSSResultGroup, html, LitElement } from 'lit';
+import { css, type CSSResultGroup, html, LitElement, type TemplateResult } from 'lit';
 import { state } from 'lit/decorators.js';
 import { match } from 'ts-pattern';
 import { querySelectorDeep } from 'query-selector-shadow-dom';
@@ -14,6 +14,7 @@ type Config = LovelaceCardConfig & {
   type: `custom:${typeof NAME}`;
   // HA doesn't seem to assert the `required` properties
   debug?: boolean;
+  manualControl?: boolean;
   template?: string;
   restoreTo?: Mode;
 };
@@ -22,20 +23,6 @@ const isMode = (value: any): value is Mode => value === 'auto' || value === 'dar
 
 const getMainElement = (): HTMLElement | null => {
   return querySelectorDeep('home-assistant') || querySelectorDeep('hc-main') || null;
-}
-
-const dispatch = (mode: Mode): void => {
-  const detail = match(mode)
-    .with('auto', () => ({ dark: undefined }))
-    .with('dark', () => ({ dark: true }))
-    .with('light', () => ({ dark: false }))
-    .exhaustive();
-
-  const root = getMainElement();
-
-  if (root) {
-    root.dispatchEvent(new CustomEvent('settheme', { detail }));
-  }
 }
 
 export const card = {
@@ -52,6 +39,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
 
   private _hass?: HomeAssistant;
   private _templateUnsubscribe?: UnsubscribeFunc;
+  private mounted = false;
 
   set hass(hass: HomeAssistant) {
     this._hass = hass;
@@ -59,6 +47,10 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
 
   set editMode(editMode: boolean) {
     this._editMode = editMode;
+
+    if (!editMode) {
+      this.currentMode = null;
+    }
   }
 
   public getCardSize(): number {
@@ -85,7 +77,12 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
     this.disconnect();
 
     this._templateUnsubscribe = await subscribeRenderTemplate(connection, result => {
-      console.log('template rendered:', result);
+      LOG(`template rendered:`, result, `continue: ${this.mounted}`);
+
+      if (this.mounted === false) {
+        return;
+      }
+
       if (isMode(result.result)) {
         this.setMode(result.result);
       }
@@ -103,6 +100,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
 
   connectedCallback(): void {
     super.connectedCallback();
+    this.mounted = true;
     LOG('light/dark mode card mounted', this._editMode ? 'in edit mode' : '');
     this.connect();
   }
@@ -117,21 +115,41 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
     if (resoteTo && this.currentMode && resoteTo !== this.currentMode) {
       this.setMode(resoteTo);
     }
+
+    this.mounted = false;
+  }
+
+  private dispatch(mode: Mode): void {
+    if (this._editMode || this.mounted === false) {
+      return;
+    }
+
+    const detail = match(mode)
+      .with('auto', () => ({ dark: undefined }))
+      .with('dark', () => ({ dark: true }))
+      .with('light', () => ({ dark: false }))
+      .exhaustive();
+
+    const root = getMainElement();
+
+    if (root) {
+      root.dispatchEvent(new CustomEvent('settheme', { detail }));
+    }
   }
 
   private setDarkMode(): void {
     this.currentMode = 'dark';
-    dispatch('dark');
+    this.dispatch('dark');
   }
 
   private setLightMode(): void {
     this.currentMode = 'light';
-    dispatch('light');
+    this.dispatch('light');
   }
 
   private setAutoMode(): void {
     this.currentMode = 'auto';
-    dispatch('auto');
+    this.dispatch('auto');
   }
 
   private setMode(mode: Mode): void {
@@ -143,44 +161,45 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
   }
 
   protected render() {
-    const styles = [
-      'padding: var(--spacing, 12px)',
-      'display: flex',
-      'align-items: center',
-      'justify-content: center',
-      'flex-direction: column',
-      'gap: calc(var(--spacing, 12px) / 4)',
-    ];
+    const ui: (TemplateResult | string)[] = [];
 
-    const placeholder = this._debug
-      ? 'Set theme mode:'
-      : this._editMode
-        ? 'Auto light/dark mode card placeholder'
-        : '👋';
+    if (this._debug) {
+      ui.push(html`<div>
+        Desired light/dark mode: <b>${this.currentMode || 'none'}</b>
+      </div>`);
+    }
 
-    const debugElem = this._debug
-      ? html`
-          <div class="row">
-            <ha-control-button style="width: 100%" @click="${this.setAutoMode}">
-              <button type="button" class="button">Auto</button>
-            </ha-control-button>
+    if (this._config?.manualControl) {
+      ui.push(html`
+        <div>Select theme mode:</div>
+        <div class="row">
+          <ha-control-button style="width: 100%" @click="${this.setAutoMode}">
+            <button type="button" class="button">Auto</button>
+          </ha-control-button>
 
-            <ha-control-button style="width: 100%" @click="${this.setLightMode}">
-              <button type="button" class="button">Light</button>
-            </ha-control-button>
+          <ha-control-button style="width: 100%" @click="${this.setLightMode}">
+            <button type="button" class="button">Light</button>
+          </ha-control-button>
 
-            <ha-control-button style="width: 100%" @click="${this.setDarkMode}">
-              <button type="button" class="button">Dark</button>
-            </ha-control-button>
-          </div>
-        `
-      : null;
+          <ha-control-button style="width: 100%" @click="${this.setDarkMode}">
+            <button type="button" class="button">Dark</button>
+          </ha-control-button>
+        </div>
+      `);
+    }
+
+    if (this._editMode && ui.length === 0) {
+      ui.push('Auto light/dark mode card placeholder');
+    }
+
+    if (ui.length === 0) {
+      return;
+    }
 
     return html`
       <ha-card style=${`${this.showCard() ? '' : 'display: none'}`}>
-        <div style=${styles.join(';')}>
-          <div>${placeholder}</div>
-          ${debugElem}
+        <div class="root">
+          ${ui.map((elem, i) => html`${i > 0 ? html`<hr />` : ''}${elem}`)}
         </div>
       </ha-card>
     `;
@@ -190,6 +209,25 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
     return css`
       ha-card {
         overflow: hidden;
+      }
+
+      hr {
+        width: 100%;
+        border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+        border-top: 0;
+        border-bottom: 1;
+        border-left: 0;
+        border-right: 0;
+        margin: var(--spacing, 12px) 0;
+      }
+
+      .root {
+        padding: var(--spacing, 12px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: calc(var(--spacing, 12px) / 4);
       }
 
       .row {
@@ -240,30 +278,39 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
           }
         },
         {
+          name: 'manualControl',
+          selector: { boolean: {} }
+        },
+        {
           name: 'debug',
           selector: { boolean: {} }
         },
       ],
-      computeLabel: (schema) => {
+      computeLabel: (schema: { name: keyof Config }) => {
         switch (schema.name) {
-          case 'debug':
-            return 'Render card with manual controls over theme mode';
+          case 'template':
+            return 'Template that resolves to one of: auto, light, dark ';
           case 'restoreTo':
             return 'Restore to *';
-          case 'template':
-            return 'Template ';
+          case 'manualControl':
+            return 'Render card with manual controls for theme mode'
+          case 'debug':
+            return 'Render debug information on the card';
           default:
             return undefined;
         }
       },
-      computeHelper: (schema) => {
+      computeHelper: (schema: { name: keyof Config }) => {
         switch (schema.name) {
-          case 'template':
-            return 'The template should resolve to one of: auto, light, dark';
           default:
             return undefined;
         }
-      }
+      },
+      assertConfig: (config: Config) => {
+        if (!config.template) {
+          throw new Error('a template is required for this card');
+        }
+      },
     };
   }
 
