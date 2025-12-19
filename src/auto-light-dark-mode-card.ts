@@ -12,7 +12,6 @@ type Mode = 'auto' | 'light' | 'dark';
 
 type Config = LovelaceCardConfig & {
   type: `custom:${typeof NAME}`;
-  // HA doesn't seem to assert the `required` properties
   debug?: boolean;
   manualControl?: boolean;
   template?: string;
