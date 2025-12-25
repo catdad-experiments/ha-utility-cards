@@ -9,13 +9,14 @@ import { type Connection, type UnsubscribeFunc, subscribeRenderTemplate } from '
 const NAME = 'catdad-auto-light-dark-mode-card' as const;
 
 type Mode = 'auto' | 'light' | 'dark';
+type RestoreTo = Mode | 'dont';
 
 type Config = LovelaceCardConfig & {
   type: `custom:${typeof NAME}`;
   debug?: boolean;
   manualControl?: boolean;
   template?: string;
-  restoreTo?: Mode;
+  restoreTo?: RestoreTo;
 };
 
 const isMode = (value: any): value is Mode => value === 'auto' || value === 'dark' || value === 'light';
@@ -111,7 +112,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
 
     const resoteTo = this._config?.restoreTo;
 
-    if (resoteTo && this.currentMode && resoteTo !== this.currentMode) {
+    if (isMode(resoteTo) && isMode(this.currentMode) && resoteTo !== this.currentMode) {
       this.setMode(resoteTo);
     }
 
@@ -270,9 +271,12 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
           required: true,
           selector: {
             select: {
-              mode: 'box',
-              options: (['auto', 'light', 'dark'] as Mode[])
-                .map((value) => ({ label: value, value })),
+              mode: 'list',
+              options: [
+                { value: 'dont', label: `don't restore` },
+                ...(['auto', 'light', 'dark'] as Mode[])
+                  .map((value) => ({ label: value, value }))
+              ],
             }
           }
         },
