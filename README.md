@@ -55,3 +55,11 @@ This card is a button that navigates back in the browser -- acts just like click
 <img width="248" height="71" alt="image" src="https://github.com/user-attachments/assets/02c75464-206b-440b-9ef4-666f3e96b19a" />
 
 You can customize the icon and text on this card through the visual editor.
+
+## Automatic Light/Dark Mode Card
+
+This card can automatically switch your dashboard between light and dark mode based on a template string (think monitoring a lux sensor on a wallpanel). You can use Home Assistant's built-in visibility settings to control when the card has effect.
+
+You can optionally also use it for manual control:
+
+<img width="364" height="106" alt="image" src="https://github.com/user-attachments/assets/7dbd1ddf-cf30-486f-8c11-6a49fb93fcc1" />
