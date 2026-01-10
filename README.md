@@ -12,6 +12,7 @@ In HACS, add the repo `https://github.com/catdad-experiments/ha-utility-cards` a
 * [`kiosk-card`](#kiosk-card)
 * [`catdad-auto-reload-card`](#auto-reload-card)
 * [`catdad-back-button-card`](#back-button-card)
+* [`catdad-auto-light-dark-mode-card`](#automatic-lightdark-mode-card)
 
 ## Combined Card
 
