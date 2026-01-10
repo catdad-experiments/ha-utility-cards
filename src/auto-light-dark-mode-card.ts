@@ -63,7 +63,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
   }
 
   private showCard(): boolean {
-    return this._debug || this._editMode;
+    return this._debug || this._editMode || !!(this._config?.manualControl);
   }
 
   private async connect(): Promise<void> {
