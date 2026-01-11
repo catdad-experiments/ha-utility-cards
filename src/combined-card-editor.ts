@@ -1,6 +1,6 @@
 import { html, LitElement } from "lit";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCardEditor, type LovelaceConfig } from 'custom-card-helpers';
-import { LOG_EDITOR as LOG } from './utils';
+import { LOG_EDITOR as LOG } from "./utils-log";
 
 export const editorFactory = (NAME: string) => {
   class CombinedCardEditor extends LitElement implements LovelaceCardEditor {
