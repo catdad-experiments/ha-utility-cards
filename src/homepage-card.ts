@@ -9,7 +9,8 @@ const NAME = 'catdad-homepage-card';
 
 type Config = LovelaceCardConfig & {
   type: `custom:${typeof NAME}`;
-  inactiveMinutes: number
+  inactiveMinutes: number;
+  fast: boolean;
 };
 
 export const card = {
@@ -22,7 +23,8 @@ type Event = keyof WindowEventMap;
 const activityEvents: Event[] = [
   'pointerdown',
   'pointerup',
-  'pointermove'
+  'pointermove',
+  'click'
 ];
 
 class HomepageCard extends LitElement implements LovelaceCard {
@@ -30,8 +32,9 @@ class HomepageCard extends LitElement implements LovelaceCard {
   @state() private _editMode: boolean = false;
 
   private _hass?: HomeAssistant;
-  private url: string;
-  private timer: Timer | undefined;
+
+  private homepage: string | undefined;
+  private userActivityTimer: Timer | undefined;
   private clearCardEventHandlers: Array<() => void> = [];
   private clearActivityEventHandlers: Array<() => void> = [];
 
@@ -43,9 +46,9 @@ class HomepageCard extends LitElement implements LovelaceCard {
     this._editMode = editMode;
 
     if (editMode) {
-      this.disable();
+      this.disableCard();
     } else {
-      this.enable();
+      this.enableCard();
     }
   }
 
@@ -61,20 +64,59 @@ class HomepageCard extends LitElement implements LovelaceCard {
     this._config = Object.assign({}, HomepageCard.getStubConfig(), config);
   }
 
-  private clearActivity(): void {
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = undefined;
+  private configValue<K extends keyof Config>(key: K): Config[K] {
+    if (this._config) {
+      return this._config[key];
+    }
+
+    return HomepageCard.getStubConfig()[key];
+  }
+
+  private get isSamePage(): boolean {
+    return this.homepage === location.pathname;
+  }
+
+  private clearUserActivityTimer(): void {
+    if (this.userActivityTimer) {
+      clearTimeout(this.userActivityTimer);
+      this.userActivityTimer = undefined;
     }
   }
-  private handleActivity(): void {
-    this.clearActivity();
-    this.timer = setTimeout(() => { }, minute * 3);
-  }
-  private initActivityMonitor(): void {
-    this.clearActivityMonitor();
+  private handleUserActivity(): void {
+    this.clearUserActivityTimer();
 
-    const handler = this.handleActivity.bind(this);
+    // don't monitor if we are still on the same page
+    if (this.isSamePage) {
+      return;
+    }
+
+    const time = (
+      this.configValue('fast')
+        ? 1
+        : minute
+    ) * this.configValue('inactiveMinutes')
+
+    this.userActivityTimer = setTimeout(() => {
+      if (!this.homepage) {
+        return;
+      }
+
+      if (this.homepage === location.pathname) {
+        return;
+      }
+
+      this.disableActivityMonitor();
+      this.disableHistoryTracker();
+      window.history.back();
+    }, time);
+  }
+
+  // monitor user activity in order to detect when the dashboard is idle
+  // this is persisted when the user navigates away from the homepage
+  private enableActivityMonitor(): void {
+    this.disableActivityMonitor();
+
+    const handler = this.handleUserActivity.bind(this);
 
     for (const event of activityEvents) {
       window.addEventListener(event, handler);
@@ -85,9 +127,11 @@ class HomepageCard extends LitElement implements LovelaceCard {
         window.removeEventListener(event, handler);
       }
     });
+
+    handler();
   }
-  private clearActivityMonitor(): void {
-    this.clearActivity();
+  private disableActivityMonitor(): void {
+    this.clearUserActivityTimer();
 
     for (const func of this.clearActivityEventHandlers) {
       func();
@@ -96,42 +140,60 @@ class HomepageCard extends LitElement implements LovelaceCard {
     this.clearActivityEventHandlers = [];
   }
 
-  private enable(): void {
-    try {
-      this.clearActivity();
+  // monitor history API to detect when we navigate away from the homepage
+  // this only executes on the homepage and kicks off user activity monitoring
+  private enableHistoryTracker(): void {
+    this.disableHistoryTracker();
 
-      if (!this.url) {
+    const handler = this.enableActivityMonitor.bind(this);
+
+    for (const event of Object.values(HistoryEvent)) {
+      window.addEventListener(event, handler);
+    }
+
+    this.clearCardEventHandlers.push(() => {
+      for (const event of Object.values(HistoryEvent)) {
+        window.removeEventListener(event, handler);
+      }
+    });
+  }
+  private disableHistoryTracker(): void {
+    for (const func of this.clearCardEventHandlers) {
+      func();
+    }
+
+    this.clearCardEventHandlers = [];
+  }
+
+  private enableCard(): void {
+    try {
+      this.clearUserActivityTimer();
+
+      if (!this.homepage) {
         LOG(`homepage card did not get a url`);
         return;
       }
 
-      LOG(`homepage card using url "${this.url}"`);
+      LOG(`homepage card using url "${this.homepage}"`);
 
-      const handler = this.initActivityMonitor.bind(this);
-
-      for (const event of Object.values(HistoryEvent)) {
-        window.addEventListener(event, handler);
-      }
-
-      this.clearCardEventHandlers.push(() => {
-        for (const event of Object.values(HistoryEvent)) {
-          window.removeEventListener(event, handler);
-        }
-      });
+      this.enableHistoryTracker();
     } catch (e) {
       LOG('failed to initialize homepage card', e);
     }
   }
 
-  private disable(): void {
+  private disableCard(): void {
     try {
       LOG('homepage card unmounting');
 
-      for (const func of this.clearCardEventHandlers) {
-        func();
-      }
+      this.disableHistoryTracker();
 
-      this.clearCardEventHandlers = [];
+      // card is unmounted while on the same page...
+      // probably card being updated or deleted
+      // so clear the activity monitor
+      if (this.isSamePage) {
+        this.disableActivityMonitor();
+      }
     } catch (e) {
       LOG('failed to disconnect homepage card', e);
     }
@@ -139,13 +201,13 @@ class HomepageCard extends LitElement implements LovelaceCard {
 
   connectedCallback(): void {
     super.connectedCallback()
-    this.url = window.location.pathname;
-    this.enable();
+    this.homepage = window.location.pathname;
+    this.enableCard();
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.disable();
+    this.disableCard();
   }
 
   protected render() {
@@ -177,15 +239,23 @@ class HomepageCard extends LitElement implements LovelaceCard {
 
   public static getConfigForm() {
     return {
-      schema: [{
-        name: "inactiveMinutes",
-        required: true,
-        selector: { number: {} }
-      }],
+      schema: [
+        {
+          name: 'inactiveMinutes',
+          required: true,
+          selector: { number: {} }
+        },
+        {
+          name: 'fast',
+          selector: { boolean: {} }
+        },
+      ],
       computeLabel: (schema: { name: keyof Config }) => {
         switch (schema.name) {
           case 'inactiveMinutes':
             return 'Inactive minutes ';
+          case 'fast':
+            return 'Fast'
           default:
             return undefined;
         }
@@ -194,6 +264,8 @@ class HomepageCard extends LitElement implements LovelaceCard {
         switch (schema.name) {
           case 'inactiveMinutes':
             return 'How many minutes of inactivity before going back home? ';
+          case 'fast':
+            return 'DEBUG: Fast mode, switches inactivity to miliseconds instead of minutes';
           default:
             return undefined;
         }
@@ -209,7 +281,8 @@ class HomepageCard extends LitElement implements LovelaceCard {
   static getStubConfig(): Partial<Config> & Pick<Config, 'type'> {
     return {
       type: `custom:${NAME}`,
-      inactiveMinutes: 5
+      inactiveMinutes: 5,
+      fast: false,
     };
   }
 }
