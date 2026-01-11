@@ -1,7 +1,8 @@
 import { css, CSSResultGroup, html, LitElement } from "lit";
 import { state } from "lit/decorators.js";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
-import { LOG } from './utils';
+import { LOG, type Timer } from './utils';
+import { HistoryEvent } from "./utils-history";
 
 const NAME = 'catdad-homepage-card';
 
@@ -10,17 +11,31 @@ type Config = LovelaceCardConfig & {
   url: string;
 };
 
+const second = 1000;
+const minute = second * 60;
+
 export const card = {
   type: NAME,
   name: 'Catdad: Homepage Card',
   description: 'Automatically navigate back to the page where the card is rendered if a dashboard is left idle'
 };
 
+type Event = keyof WindowEventMap;
+const activityEvents: Event[] = [
+  'pointerdown',
+  'pointerup',
+  'pointermove'
+];
+
 class HomepageCard extends LitElement implements LovelaceCard {
   @state() private _config?: Config;
   @state() private _editMode: boolean = false;
 
   private _hass?: HomeAssistant;
+  private url: string;
+  private timer: Timer | undefined;
+  private clearCardEventHandlers: Array<() => void> = [];
+  private clearActivityEventHandlers: Array<() => void> = [];
 
   set hass(hass: HomeAssistant) {
     this._hass = hass;
@@ -48,16 +63,65 @@ class HomepageCard extends LitElement implements LovelaceCard {
     this._config = Object.assign({}, HomepageCard.getStubConfig(), config);
   }
 
+  private clearActivity(): void {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = undefined;
+    }
+  }
+  private handleActivity(): void {
+    this.clearActivity();
+    this.timer = setTimeout(() => { }, minute * 3);
+  }
+  private initActivityMonitor(): void {
+    this.clearActivityMonitor();
+
+    const handler = this.handleActivity.bind(this);
+
+    for (const event of activityEvents) {
+      window.addEventListener(event, handler);
+    }
+
+    this.clearActivityEventHandlers.push(() => {
+      for (const event of activityEvents) {
+        window.removeEventListener(event, handler);
+      }
+    });
+  }
+  private clearActivityMonitor(): void {
+    this.clearActivity();
+
+    for (const func of this.clearActivityEventHandlers) {
+      func();
+    }
+
+    this.clearActivityEventHandlers = [];
+  }
+
   private enable(): void {
     try {
-      const url = this._config?.url;
+      this.clearActivity();
 
-      if (!url) {
+      this.url = window.location.pathname;
+
+      if (!this.url) {
         LOG(`homepage card did not get a url`);
         return;
       }
 
-      LOG(`homepage card using url "${url}"`);
+      LOG(`homepage card using url "${this.url}"`);
+
+      const handler = this.initActivityMonitor.bind(this);
+
+      for (const event of Object.values(HistoryEvent)) {
+        window.addEventListener(event, handler);
+      }
+
+      this.clearCardEventHandlers.push(() => {
+        for (const event of Object.values(HistoryEvent)) {
+          window.removeEventListener(event, handler);
+        }
+      });
     } catch (e) {
       LOG('failed to initialize homepage card', e);
     }
@@ -65,7 +129,13 @@ class HomepageCard extends LitElement implements LovelaceCard {
 
   private disable(): void {
     try {
+      LOG('homepage card unmounting');
 
+      for (const func of this.clearCardEventHandlers) {
+        func();
+      }
+
+      this.clearCardEventHandlers = [];
     } catch (e) {
       LOG('failed to disconnect homepage card', e);
     }
