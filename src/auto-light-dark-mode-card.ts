@@ -3,8 +3,8 @@ import { state } from 'lit/decorators.js';
 import { match } from 'ts-pattern';
 import { querySelectorDeep } from 'query-selector-shadow-dom';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
-import { type Connection, type UnsubscribeFunc, subscribeRenderTemplate } from './template-subscriber';
-import { LOG } from "./utils-log";
+import { type Connection, type UnsubscribeFunc, subscribeRenderTemplate } from './utils/template-subscriber';
+import { LOG } from "./utils/log";
 
 const NAME = 'catdad-auto-light-dark-mode-card' as const;
 

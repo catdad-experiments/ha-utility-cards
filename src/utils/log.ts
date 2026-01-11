@@ -1,4 +1,4 @@
-import * as pjson from '../package.json';
+import * as pjson from '../../package.json';
 
 const PROJECT = 'catdad utility cards';
 

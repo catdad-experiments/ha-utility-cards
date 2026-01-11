@@ -1,7 +1,7 @@
 import { css, CSSResultGroup, html, LitElement } from "lit";
 import { state } from "lit/decorators.js";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
-import { resolveColor } from './utils';
+import { resolveColor } from './utils/utils';
 
 const NAME = 'catdad-back-button-card';
 
