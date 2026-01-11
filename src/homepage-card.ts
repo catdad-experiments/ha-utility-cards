@@ -5,6 +5,25 @@ import { type Timer, minute } from './utils/types';
 import { HistoryEvent } from "./utils/history";
 import { LOG } from "./utils/log";
 
+/** card lifecycle:
+ *
+ * card mount
+ *   enable history tracker
+ *
+ * user navigates away from homepage (history detect)
+ * _note: happens before card unmount on navigation_
+ *   enable user activity monitor
+ *     becomes idle (user activity detect)
+ *       disable user activity monitor
+ *       disable history monitor
+ *       navigate back to homepage
+ *
+ * card unmount
+ *   disable history tracker
+ *   if on the same page (card deleted/repaced)
+ *      disable user activity tracker
+ */
+
 const NAME = 'catdad-homepage-card';
 
 type Config = LovelaceCardConfig & {
