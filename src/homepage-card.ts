@@ -100,8 +100,6 @@ class HomepageCard extends LitElement implements LovelaceCard {
     try {
       this.clearActivity();
 
-      this.url = window.location.pathname;
-
       if (!this.url) {
         LOG(`homepage card did not get a url`);
         return;
@@ -141,6 +139,7 @@ class HomepageCard extends LitElement implements LovelaceCard {
 
   connectedCallback(): void {
     super.connectedCallback()
+    this.url = window.location.pathname;
     this.enable();
   }
 
@@ -178,32 +177,32 @@ class HomepageCard extends LitElement implements LovelaceCard {
 
   public static getConfigForm() {
     return {
-      schema: [
-        {
-          name: 'url',
-          required: true,
-          selector: { template: {} }
-        },
-      ],
+      schema: [{
+        name: "inactiveMinutes",
+        required: true,
+        selector: { number: {} }
+      }],
       computeLabel: (schema: { name: keyof Config }) => {
         switch (schema.name) {
-          case 'url':
-            return 'Where to navigate to ';
+          case 'inactiveMinutes':
+            return 'Inactive minutes ';
           default:
             return undefined;
         }
       },
       computeHelper: (schema: { name: keyof Config }) => {
         switch (schema.name) {
+          case 'inactiveMinutes':
+            return 'How many minutes of inactivity before going back home? ';
           default:
             return undefined;
         }
       },
-      assertConfig: (config: Config) => {
-        if (!config.url) {
-          // throw new Error('a url is required for this card');
-        }
-      },
+      // assertConfig: (config: Config) => {
+      //   if (!config.url) {
+      //     // throw new Error('a url is required for this card');
+      //   }
+      // },
     };
   }
 
