@@ -1,5 +1,3 @@
-import * as pjson from '../package.json';
-
 export type fn = (...args: any[]) => void;
 
 export const sleep = (time: number): Promise<undefined> => new Promise(resolve => setTimeout(() => resolve(undefined), time));

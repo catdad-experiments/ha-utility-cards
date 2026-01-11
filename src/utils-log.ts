@@ -1,3 +1,5 @@
+import * as pjson from '../package.json';
+
 const PROJECT = 'catdad utility cards';
 
 const pillStyle = (color: string) => `color: ${color}; font-weight: bold; background: #555; border-radius: 2rem`;
