@@ -19,3 +19,6 @@ export const isHexString = (color: string): boolean => {
 export const resolveColor = (value: string): string => {
   return isHexString(value) ? value : `var(--${value}-color, ${value})`;
 };
+
+export const second = 1000;
+export const minute = second * 60;
