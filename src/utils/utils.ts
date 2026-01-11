@@ -1,7 +1,3 @@
-export type fn = (...args: any[]) => void;
-
-export const sleep = (time: number): Promise<undefined> => new Promise(resolve => setTimeout(() => resolve(undefined), time));
-
 // Home Assistant really needs to make this an SDK so that we can
 // stop trying to hack it. When they use these helpers, they can
 // use them synchronously, but third-party devs can't.
@@ -77,23 +73,3 @@ export const loadStackEditor = async () => {
   return await stackCard.constructor.getConfigElement();
 };
 
-export const speed = (time: number): Promise<void> => new Promise(r => setTimeout(() => r(), time));
-
-export const isDate = (value: unknown): value is Date => {
-  return value instanceof Date && !isNaN(value.getTime());
-};
-
-export const isNumber = (value: unknown): value is number => {
-  return typeof value === 'number' && isNaN(value) === false;
-};
-
-export const isHexString = (color: string): boolean => {
-  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color);
-};
-
-export const resolveColor = (value: string): string => {
-  return isHexString(value) ? value : `var(--${value}-color, ${value})`;
-};
-
-export type Timer = ReturnType<typeof setTimeout>;
-export type Interval = ReturnType<typeof setInterval>;
