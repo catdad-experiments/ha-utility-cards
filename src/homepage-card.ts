@@ -1,18 +1,16 @@
 import { css, CSSResultGroup, html, LitElement } from "lit";
 import { state } from "lit/decorators.js";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
-import { LOG, type Timer } from './utils';
-import { HistoryEvent } from "./utils-history";
+import { type Timer, minute } from './utils/types';
+import { HistoryEvent } from "./utils/history";
+import { LOG } from "./utils/log";
 
 const NAME = 'catdad-homepage-card';
 
 type Config = LovelaceCardConfig & {
   type: `custom:${typeof NAME}`;
-  url: string;
+  inactiveMinutes: number
 };
-
-const second = 1000;
-const minute = second * 60;
 
 export const card = {
   type: NAME,
@@ -212,6 +210,7 @@ class HomepageCard extends LitElement implements LovelaceCard {
   static getStubConfig(): Partial<Config> & Pick<Config, 'type'> {
     return {
       type: `custom:${NAME}`,
+      inactiveMinutes: 5
     };
   }
 }
