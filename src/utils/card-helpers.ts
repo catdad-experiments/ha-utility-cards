@@ -1,7 +1,9 @@
+import { type FN } from './types';
+
 // Home Assistant really needs to make this an SDK so that we can
 // stop trying to hack it. When they use these helpers, they can
 // use them synchronously, but third-party devs can't.
-export const HELPERS = ((loadCardHelpers, callbacks: fn[]) => {
+export const HELPERS = ((loadCardHelpers, callbacks: FN[]) => {
   const fileBugStr = 'Please file a bug at https://github.com/catdad-experiments/ha-combined-card and explain your setup.';
   let _helpers;
 
@@ -72,4 +74,3 @@ export const loadStackEditor = async () => {
   // @ts-ignore
   return await stackCard.constructor.getConfigElement();
 };
-
