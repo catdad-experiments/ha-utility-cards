@@ -20,6 +20,7 @@ export const LOG_EDITOR = (first: string, ...args: any[]) => {
 }
 
 export type Logger = {
+  error: (...args: LogArgs) => void,
   info: (...args: LogArgs) => void,
   debug: (...args: LogArgs) => void
 };
@@ -40,18 +41,21 @@ export const createLogger = ({
     console.log(`${pill} ${pillText(name)} ${first}`, pillStyle('#bada55'), pillStyle(color), ...rest);
   };
 
-  return {
-    info: (...args: LogArgs) => {
+  const info: Logger['info'] = (...args: LogArgs) => {
       if (level === 'info' || level === 'debug') {
         write(...args);
       }
-    },
-    debug: (...args: LogArgs) => {
+    };
+
+  const debug: Logger['debug'] = (...args: LogArgs) => {
       if (level === 'debug') {
         write(...args);
       }
-    }
-  };
+    };
+
+  const error = info;
+
+  return { error, info, debug };
 };
 
 export const initLogger = createLogger({ name: 'init', color: '#F6C304' });
