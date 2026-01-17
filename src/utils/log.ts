@@ -19,11 +19,17 @@ export const LOG_EDITOR = (first: string, ...args: any[]) => {
   LOG(`${pillText('editor')} ${first}`, pillStyle('#D15798'), ...args);
 }
 
-export type Logger = {
-  error: (...args: LogArgs) => void,
-  info: (...args: LogArgs) => void,
-  debug: (...args: LogArgs) => void
-};
+type Level = 'error' | 'info' | 'debug';
+type LogFunc = (...args: LogArgs) => void;
+export type Logger = Record<Level, LogFunc>;
+
+const levels: Record<Level, number> = {
+  error: 5,
+  info: 3,
+  debug: 1
+}
+
+const noop = () => { };
 
 export type LoggerOptions = {
   name: string,
@@ -41,21 +47,11 @@ export const createLogger = ({
     console.log(`${pill} ${pillText(name)} ${first}`, pillStyle('#bada55'), pillStyle(color), ...rest);
   };
 
-  const info: Logger['info'] = (...args: LogArgs) => {
-      if (level === 'info' || level === 'debug') {
-        write(...args);
-      }
-    };
-
-  const debug: Logger['debug'] = (...args: LogArgs) => {
-      if (level === 'debug') {
-        write(...args);
-      }
-    };
-
-  const error = info;
-
-  return { error, info, debug };
+  return {
+    error: levels['error'] >= levels[level] ? write : noop,
+    info: levels['info'] >= levels[level] ? write : noop,
+    debug: levels['debug'] >= levels[level] ? write : noop,
+  };
 };
 
 export const initLogger = createLogger({ name: 'init', color: '#F6C304' });
