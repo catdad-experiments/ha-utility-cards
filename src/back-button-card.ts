@@ -1,7 +1,8 @@
-import { css, CSSResultGroup, html, LitElement } from "lit";
+import { css, CSSResultGroup, html } from "lit";
 import { state } from "lit/decorators.js";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
 import { resolveColor } from './utils/types';
+import { UtilityCard } from "./utils/utility-card";
 
 const NAME = 'catdad-back-button-card';
 
@@ -11,9 +12,11 @@ export const card = {
   description: 'Add a back button anywhere on your dashboard'
 };
 
-class BackButtonCard extends LitElement implements LovelaceCard {
+class BackButtonCard extends UtilityCard implements LovelaceCard {
   @state() private _config: LovelaceCardConfig = BackButtonCard.getStubConfig();
   @state() private _editMode: boolean = false;
+
+  protected readonly name: string = NAME;
 
   private _hass?: HomeAssistant;
 
