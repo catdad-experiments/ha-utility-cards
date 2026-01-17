@@ -1,9 +1,9 @@
-import { css, CSSResultGroup, html, LitElement } from "lit";
+import { css, CSSResultGroup, html } from "lit";
 import { state } from "lit/decorators.js";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
 import { type Timer, minute } from './utils/types';
 import { HistoryEvent } from "./utils/history";
-import { LOG } from "./utils/log";
+import { UtilityCard } from "./utils/utility-card";
 
 /** card lifecycle:
  *
@@ -46,9 +46,11 @@ const activityEvents: Event[] = [
   'click'
 ];
 
-class HomepageCard extends LitElement implements LovelaceCard {
+class HomepageCard extends UtilityCard implements LovelaceCard {
   @state() private _config?: Config;
   @state() private _editMode: boolean = false;
+
+  protected readonly name: string = NAME;
 
   private _hass?: HomeAssistant;
 
@@ -189,21 +191,21 @@ class HomepageCard extends LitElement implements LovelaceCard {
       this.clearUserActivityTimer();
 
       if (!this.homepage) {
-        LOG(`homepage card did not get a url`);
+        this.logger.error(`homepage card did not get a url`);
         return;
       }
 
-      LOG(`homepage card using url "${this.homepage}"`);
+      this.logger.info(`homepage card using url "${this.homepage}"`);
 
       this.enableHistoryTracker();
     } catch (e) {
-      LOG('failed to initialize homepage card', e);
+      this.logger.error('failed to initialize homepage card', e);
     }
   }
 
   private disableCard(): void {
     try {
-      LOG('homepage card unmounting');
+      this.logger.debug('homepage card unmounting');
 
       this.disableHistoryTracker();
 
@@ -214,7 +216,7 @@ class HomepageCard extends LitElement implements LovelaceCard {
         this.disableActivityMonitor();
       }
     } catch (e) {
-      LOG('failed to disconnect homepage card', e);
+      this.logger.error('failed to disconnect homepage card', e);
     }
   }
 
