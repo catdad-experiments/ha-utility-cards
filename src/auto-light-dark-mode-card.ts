@@ -1,10 +1,11 @@
-import { css, type CSSResultGroup, html, LitElement, type TemplateResult } from 'lit';
+import { type CSSResultGroup, type TemplateResult, css, html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { match } from 'ts-pattern';
 import { querySelectorDeep } from 'query-selector-shadow-dom';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
+
 import { type Connection, type UnsubscribeFunc, subscribeRenderTemplate } from './utils/template-subscriber';
-import { LOG } from "./utils/log";
+import { UtilityCard } from './utils/utility-card';
 
 const NAME = 'catdad-auto-light-dark-mode-card' as const;
 
@@ -31,11 +32,13 @@ export const card = {
   description: 'Automatically switch between light and dark mode for your dashboard'
 };
 
-class AutoReloadCard extends LitElement implements LovelaceCard {
+class AutoReloadCard extends UtilityCard implements LovelaceCard {
   @state() private _config?: Config;
   @state() private _editMode: boolean = false;
   @state() private _debug: boolean = false;
   @state() private currentMode: Mode | null = null;
+
+  protected readonly name: string = NAME;
 
   private _hass?: HomeAssistant;
   private _templateUnsubscribe?: UnsubscribeFunc;
@@ -60,6 +63,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
   public setConfig(config: Config): void {
     this._config = Object.assign({}, AutoReloadCard.getStubConfig(), config);
     this._debug = !!this._config?.debug;
+    this.loggerOptions.level = this._debug ? 'debug' : 'info';
   }
 
   private showCard(): boolean {
@@ -77,7 +81,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
     this.disconnect();
 
     this._templateUnsubscribe = await subscribeRenderTemplate(connection, result => {
-      LOG(`template rendered:`, result, `continue: ${this.mounted}`);
+      this.logger.debug(`template rendered:`, result, `continue: ${this.mounted}`);
 
       if (this.mounted === false) {
         return;
@@ -101,13 +105,13 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
   connectedCallback(): void {
     super.connectedCallback();
     this.mounted = true;
-    LOG('light/dark mode card mounted', this._editMode ? 'in edit mode' : '');
+    this.logger.debug('light/dark mode card mounted', this._editMode ? 'in edit mode' : '');
     this.connect();
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    LOG('light/dark mode card unmounted', this._editMode ? 'in edit mode' : '');
+    this.logger.debug('light/dark mode card unmounted', this._editMode ? 'in edit mode' : '');
     this.disconnect();
 
     const restoreTo = this._config?.restoreTo;
