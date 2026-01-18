@@ -1,7 +1,7 @@
 import { css, CSSResultGroup, html } from "lit";
 import { state } from "lit/decorators.js";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
-import { type Timer, minute } from './utils/types';
+import { type Timer, minute, sleep } from './utils/types';
 import { HistoryEvent } from "./utils/history";
 import { UtilityCard } from "./utils/utility-card";
 
@@ -50,7 +50,7 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
   @state() private _config?: Config;
   @state() private _editMode: boolean = false;
 
-  protected readonly name: string = NAME;
+  protected readonly name: string = `${NAME} (${Math.random().toString(36).slice(2, 8)})`;
 
   private _hass?: HomeAssistant;
 
@@ -68,7 +68,7 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
 
     if (editMode) {
       this.disableCard();
-    } else {
+    } else if (this.homepage) {
       this.enableCard();
     }
   }
@@ -128,7 +128,25 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
 
       this.disableActivityMonitor();
       this.disableHistoryTracker();
+
+      this.logger.info('navigating back to homepage');
+
+      // Home Assistant does not automatically navigate on push
+      // but it does navigate on pop, so push the homepage twice and
+      // then go back
+      window.history.pushState(null, '', this.homepage);
+      window.history.pushState(null, '', this.homepage);
       window.history.back();
+
+      // in theory, we could continue to go back until we reach
+      // the homepage, since we must have come from the homepage
+      // in order for this card to even be active
+      // Promise.resolve().then(async () => {
+      //   while (window.history.length && this.homepage !== location.pathname) {
+      //     window.history.back();
+      //     await sleep(1000);
+      //   }
+      // });
     }, time);
   }
 
@@ -140,7 +158,7 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
     const handler = this.handleUserActivity.bind(this);
 
     for (const event of activityEvents) {
-      window.addEventListener(event, handler);
+      window.addEventListener(event, handler, { passive: true });
     }
 
     this.clearActivityEventHandlers.push(() => {
@@ -169,7 +187,7 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
     const handler = this.enableActivityMonitor.bind(this);
 
     for (const event of Object.values(HistoryEvent)) {
-      window.addEventListener(event, handler);
+      window.addEventListener(event, handler, { passive: true });
     }
 
     this.clearCardEventHandlers.push(() => {
@@ -222,13 +240,18 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
 
   connectedCallback(): void {
     super.connectedCallback()
+
+    this.logger.info('mounted');
     this.homepage = window.location.pathname;
     this.enableCard();
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
+
     this.disableCard();
+    this.homepage = undefined;
+    this.logger.debug('unmounted');
   }
 
   protected render() {
