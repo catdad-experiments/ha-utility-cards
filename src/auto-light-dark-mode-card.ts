@@ -1,8 +1,8 @@
 import { type CSSResultGroup, type TemplateResult, css, html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { match } from 'ts-pattern';
-import { querySelectorDeep } from 'query-selector-shadow-dom';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
+import { fireEvent, getMainElement } from './utils/events';
 
 import { type Connection, type UnsubscribeFunc, subscribeRenderTemplate } from './utils/template-subscriber';
 import { UtilityCard } from './utils/utility-card';
@@ -21,10 +21,6 @@ type Config = LovelaceCardConfig & {
 };
 
 const isMode = (value: any): value is Mode => value === 'auto' || value === 'dark' || value === 'light';
-
-const getMainElement = (): HTMLElement | null => {
-  return querySelectorDeep('home-assistant') || querySelectorDeep('hc-main') || null;
-}
 
 export const card = {
   type: NAME,
@@ -137,7 +133,7 @@ class AutoReloadCard extends UtilityCard implements LovelaceCard {
     const root = getMainElement();
 
     if (root) {
-      root.dispatchEvent(new CustomEvent('settheme', { detail }));
+      fireEvent(root, 'settheme', detail);
     }
   }
 
