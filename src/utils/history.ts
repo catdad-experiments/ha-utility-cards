@@ -1,3 +1,7 @@
+import { createLogger } from "./log";
+
+const logger = createLogger({ name: 'history manager', color: '#eeeeee'});
+
 export const HistoryEvent = {
   back: 'catdad-history-back',
   forward: 'catdad-history-forward',
@@ -7,38 +11,38 @@ export const HistoryEvent = {
 };
 
 window.history.back = (...args) => {
-  // console.log('BACK', args);
+  logger.info('BACK', args);
 
   History.prototype.back.apply(history, args);
   window.dispatchEvent(new CustomEvent(HistoryEvent.back));
 };
 
 window.history.forward = (...args) => {
-  // console.log('FORWARD', args);
+  logger.info('FORWARD', args);
 
   History.prototype.forward.apply(history, args);
   window.dispatchEvent(new CustomEvent(HistoryEvent.forward));
 };
 
 window.history.go = (...args) => {
-  // console.log('GO', args);
+  logger.info('GO', args);
 
   History.prototype.go.apply(history, args);
   window.dispatchEvent(new CustomEvent(HistoryEvent.go));
 };
 
 window.history.pushState = (...args) => {
-  // console.log('PUSHSTATE', args);
+  logger.info('PUSHSTATE', args);
 
   History.prototype.pushState.apply(history, args);
   window.dispatchEvent(new CustomEvent(HistoryEvent.pushState));
 };
 
 window.history.replaceState = (...args) => {
-  // console.log('REPLACESTATE', args);
+  logger.info('REPLACESTATE', args);
 
   History.prototype.replaceState.apply(history, args);
   window.dispatchEvent(new CustomEvent(HistoryEvent.replaceState));
 };
 
-// console.log('PATCHED HISTORY');
+logger.info('patch applied');
