@@ -115,38 +115,44 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
       this.configValue('fast')
         ? 1
         : minute
-    ) * this.configValue('inactiveMinutes')
+    ) * this.configValue('inactiveMinutes');
+
+    const homepage = this.homepage;
+
+    this.logger.debug(`start inactivity tracking for ${time}ms before returning to "${homepage}"`);
+
+    if (!homepage) {
+      return;
+    }
 
     this.userActivityTimer = setTimeout(() => {
-      if (!this.homepage) {
-        return;
-      }
-
-      if (this.homepage === location.pathname) {
-        return;
-      }
-
       this.disableActivityMonitor();
       this.disableHistoryTracker();
 
-      this.logger.info('navigating back to homepage');
+      if (homepage === location.pathname) {
+        return;
+      }
+
+      this.logger.info('navigating back to homepage:', homepage);
 
       // Home Assistant does not automatically navigate on push
       // but it does navigate on pop, so push the homepage twice and
       // then go back
-      // window.history.pushState(null, '', this.homepage);
-      // window.history.pushState(null, '', this.homepage);
+      // window.history.pushState(null, '', homepage);
+      // window.history.pushState(null, '', homepage);
       // window.history.back();
 
       // in theory, we could continue to go back until we reach
       // the homepage, since we must have come from the homepage
       // in order for this card to even be active
       Promise.resolve().then(async () => {
-        while (window.history.length && this.homepage !== location.pathname) {
+        while (window.history.length && homepage !== location.pathname) {
           window.history.back();
           await sleep(1000);
         }
       });
+
+      // window.location.href = homepage;
     }, time);
   }
 
