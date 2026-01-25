@@ -1,11 +1,12 @@
 import { version } from '../../package.json';
 
-const PROJECT = 'catdad utility cards';
+const SHORT = '😺';
+const PROJECT = `catdad utility cards v${version}`;
 
 const pillStyle = (color: string) => `color: ${color}; font-weight: bold; background: #555; border-radius: 2rem`;
 const pillText = (text: string) => `%c ${text} \x1B[m`;
 
-const pill = `${pillText(`${PROJECT} v${version}`)}`;
+const pill = `${pillText(SHORT)}`;
 
 /** @deprecated */
 export const LOG = (first: string, ...args: any[]) => {
@@ -54,6 +55,6 @@ export const createLogger = ({
   };
 };
 
-export const initLogger = createLogger({ name: 'init', color: '#F6C304' });
+export const initLogger = createLogger({ name: PROJECT, color: '#F6C304' });
 
-initLogger.info('loaded 😺');
+initLogger.info('loaded');
