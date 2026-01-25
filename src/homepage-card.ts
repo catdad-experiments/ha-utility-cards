@@ -4,6 +4,7 @@ import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from '
 import { type Timer, minute, sleep, random } from './utils/types';
 import { HistoryEvent } from "./utils/history";
 import { UtilityCard } from "./utils/utility-card";
+import type { LoggerOptions } from "./utils/log";
 
 /** card lifecycle:
  *
@@ -78,8 +79,15 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
     return !!this._config?.debug;
   }
 
+  protected get loggerOptions(): LoggerOptions {
+    return {
+      ...super.loggerOptions,
+      level: this.debug ? 'debug' : 'info'
+    };
+  }
+
   private showCard(): boolean {
-    return this._editMode;
+    return this._editMode || this.debug;
   }
 
   public getCardSize(): number {
@@ -138,7 +146,7 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
         return;
       }
 
-      this.logger.info('navigating back to homepage:', homepage);
+      this.logger.debug('navigating back to homepage:', homepage);
 
       // Home Assistant does not automatically navigate on push
       // but it does navigate on pop, so push the homepage twice and
@@ -269,7 +277,7 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
     return html`
       <ha-card style=${`${this.showCard() ? '' : 'display: none'}`}>
         <div class="root">
-          Homepage card placeholder
+          Homepage card ${this.debug && !this._editMode ? 'is active' : 'placeholder'}
         </div>
       </ha-card>
     `;
