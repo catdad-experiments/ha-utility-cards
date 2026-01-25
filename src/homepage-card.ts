@@ -1,7 +1,7 @@
 import { css, CSSResultGroup, html } from "lit";
 import { state } from "lit/decorators.js";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
-import { type Timer, minute, sleep } from './utils/types';
+import { type Timer, minute, sleep, random } from './utils/types';
 import { HistoryEvent } from "./utils/history";
 import { UtilityCard } from "./utils/utility-card";
 
@@ -30,6 +30,7 @@ type Config = LovelaceCardConfig & {
   type: `custom:${typeof NAME}`;
   inactiveMinutes: number;
   fast: boolean;
+  debug: boolean;
 };
 
 export const card = {
@@ -50,7 +51,7 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
   @state() private _config?: Config;
   @state() private _editMode: boolean = false;
 
-  protected readonly name: string = `${NAME} (${Math.random().toString(36).slice(2, 8)})`;
+  protected readonly name: string = `${NAME} (${random()})`;
 
   private _hass?: HomeAssistant;
 
@@ -71,6 +72,10 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
     } else if (this.homepage) {
       this.enableCard();
     }
+  }
+
+  private get debug(): boolean {
+    return !!this._config?.debug;
   }
 
   private showCard(): boolean {
@@ -299,6 +304,10 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
           name: 'fast',
           selector: { boolean: {} }
         },
+        {
+          name: 'debug',
+          selector: { boolean: {} }
+        },
       ],
       computeLabel: (schema: { name: keyof Config }) => {
         switch (schema.name) {
@@ -316,6 +325,8 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
             return 'How many minutes of inactivity before going back home? ';
           case 'fast':
             return 'DEBUG: Fast mode, switches inactivity to miliseconds instead of minutes';
+          case 'debug':
+            return 'Always render the card, enable debug logging'
           default:
             return undefined;
         }
@@ -333,6 +344,7 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
       type: `custom:${NAME}`,
       inactiveMinutes: 5,
       fast: false,
+      debug: false,
     };
   }
 }
