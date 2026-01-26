@@ -45,8 +45,17 @@ const activityEvents: Event[] = [
   'pointerdown',
   'pointerup',
   'pointermove',
-  'click'
+  'click',
+  'touchend'
 ];
+
+const style = <T extends HTMLElement>(elem: T, styles: Partial<Record<keyof CSSStyleDeclaration, string>>): T => {
+  for (const [key, value] of Object.entries(styles)) {
+    elem.style[key] = value;
+  }
+
+  return elem;
+};
 
 class HomepageCard extends UtilityCard implements LovelaceCard {
   @state() private _config?: Config;
@@ -57,9 +66,9 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
   private _hass?: HomeAssistant;
 
   private homepage: string | undefined;
-  private userActivityTimer: Timer | undefined;
   private clearCardEventHandlers: Array<() => void> = [];
   private clearActivityEventHandlers: Array<() => void> = [];
+  private clearQueuedHanlder: Array<() => void> = [];
 
   set hass(hass: HomeAssistant) {
     this._hass = hass;
@@ -111,12 +120,13 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
   }
 
   private clearUserActivityTimer(): void {
-    if (this.userActivityTimer) {
-      clearTimeout(this.userActivityTimer);
-      this.userActivityTimer = undefined;
+    for (const func of this.clearQueuedHanlder) {
+      func();
     }
+
+    this.clearQueuedHanlder = [];
   }
-  private handleUserActivity(): void {
+  private handleUserActivity(homepage?: string): void {
     this.clearUserActivityTimer();
 
     // don't monitor if we are still on the same page
@@ -130,15 +140,29 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
         : minute
     ) * this.configValue('inactiveMinutes');
 
-    const homepage = this.homepage;
-
     this.logger.debug(`start inactivity tracking for ${time}ms before returning to "${homepage}"`);
 
     if (!homepage) {
       return;
     }
 
-    this.userActivityTimer = setTimeout(() => {
+    const elem = style(document.createElement('div'), {
+      position: 'fixed',
+      top: '5px',
+      left: '50%',
+      fontSize: '10px',
+      padding: '3px 6px',
+      lineHeight: '1.2',
+      background: '#C14953',
+      color: '#F0D2D4',
+      zIndex: '10000',
+      borderRadius: '10px',
+      pointerEvents: 'none',
+      transform: 'translateX(-50%)'
+    });
+    elem.appendChild(document.createTextNode('homepage card is active'));
+
+    const timer = setTimeout(() => {
       this.disableActivityMonitor();
       this.disableHistoryTracker();
 
@@ -167,6 +191,17 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
 
       // window.location.href = homepage;
     }, time);
+
+    if (this.debug) {
+      document.body.appendChild(elem);
+      this.logger.debug('tracker element', elem);
+    }
+
+    this.clearQueuedHanlder.push(() => {
+      this.logger.debug('removing timer');
+      clearTimeout(timer);
+      elem.remove();
+    });
   }
 
   // monitor user activity in order to detect when the dashboard is idle
@@ -174,7 +209,7 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
   private enableActivityMonitor(): void {
     this.disableActivityMonitor();
 
-    const handler = this.handleUserActivity.bind(this);
+    const handler = this.handleUserActivity.bind(this, this.homepage);
 
     for (const event of activityEvents) {
       window.addEventListener(event, handler, { passive: true });
