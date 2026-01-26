@@ -120,6 +120,8 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
   }
 
   private clearUserActivityTimer(): void {
+    this.logger.debug('clear user activity timer');
+
     for (const func of this.clearQueuedHanlder) {
       func();
     }
@@ -225,6 +227,7 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
   }
   private disableActivityMonitor(): void {
     this.clearUserActivityTimer();
+    this.logger.debug('disable activity monitor');
 
     for (const func of this.clearActivityEventHandlers) {
       func();
@@ -251,6 +254,8 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
     });
   }
   private disableHistoryTracker(): void {
+    this.logger.debug('disable history tracker');
+
     for (const func of this.clearCardEventHandlers) {
       func();
     }
@@ -277,8 +282,7 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
 
   private disableCard(): void {
     try {
-      this.logger.debug('homepage card unmounting');
-
+      this.logger.debug('disable card');
       this.disableHistoryTracker();
 
       // card is unmounted while on the same page...
@@ -295,7 +299,7 @@ class HomepageCard extends UtilityCard implements LovelaceCard {
   connectedCallback(): void {
     super.connectedCallback()
 
-    this.logger.info('mounted');
+    this.logger.debug('mounted');
     this.homepage = window.location.pathname;
     this.enableCard();
   }
