@@ -243,4 +243,4 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
 }
 
 customElements.define(NAME, CombinedCard);
-customElements.define(EDITOR_NAME, editorFactory(NAME));
+customElements.define(EDITOR_NAME, editorFactory(NAME, CombinedCard.getStubConfig()));

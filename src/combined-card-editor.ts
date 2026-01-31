@@ -10,19 +10,14 @@ export type Config = LovelaceCardConfig & {
   sizeAlgorithm?: 'temp' | 'render' | 'component'
 };
 
-export const editorFactory = (NAME: string) => {
+export const editorFactory = (NAME: string, stubConfig: Config) => {
   class CombinedCardEditor extends LitElement implements LovelaceCardEditor {
     private _hass?: HomeAssistant;
     private _lovelace?: LovelaceConfig;
 
-    private cardType = `custom:${NAME}`;
     private logger = createLogger({ name: `${NAME}-editor` });
 
-    @state() private _config: Config = {
-      // TODO should come from the card
-      type: this.cardType,
-      cards: [],
-    };
+    @state() private _config: Config = stubConfig;
 
     setConfig(config: Config): void {
       this._config = {
@@ -54,7 +49,7 @@ export const editorFactory = (NAME: string) => {
             this.configChanged({
               ...this._config,
               ...ev.detail.config,
-              type: this.cardType,
+              type: stubConfig.type,
             });
           }}
           ._config=${{
