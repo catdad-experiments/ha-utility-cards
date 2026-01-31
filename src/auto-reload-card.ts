@@ -1,8 +1,9 @@
-import { css, CSSResultGroup, html, LitElement } from "lit";
+import { css, CSSResultGroup, html } from "lit";
 import { state } from "lit/decorators.js";
 import { querySelectorDeep } from "query-selector-shadow-dom";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
-import { type Interval, type Timer, LOG, isDate, isNumber, sleep } from './utils';
+import { type Interval, type Timer, isDate, isNumber, sleep } from './utils/types';
+import { UtilityCard } from "./utils/utility-card";
 
 const NAME = 'catdad-auto-reload-card' as const;
 
@@ -33,11 +34,13 @@ export const card = {
   description: 'Reload the dashboard if it loses connection'
 };
 
-class AutoReloadCard extends LitElement implements LovelaceCard {
+class AutoReloadCard extends UtilityCard implements LovelaceCard {
   @state() private _config?: Config;
   @state() private _editMode: boolean = false;
   @state() private _lastUpdated: string = 'entity not found in state';
   @state() private _debug: boolean = false;
+
+  protected readonly name: string = NAME;
 
   private _hass?: HomeAssistant;
   private _disconnectTimer?: Timer;
@@ -80,6 +83,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
   public setConfig(config: Config): void {
     this._config = Object.assign({}, AutoReloadCard.getStubConfig(), config);
     this._debug = !!this._config?.debug;
+    this.loggerOptions.level = this._debug ? 'debug' : 'info';
 
     this.debugOnlyWithInfo();
   }
@@ -104,19 +108,19 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
 
     try {
       if (this._refreshInterval) {
-      clearInterval(this._refreshInterval);
-    }
-
-    this._refreshInterval = setInterval(() => {
-      const toast = querySelectorDeep('home-assistant notification-manager ha-toast ha-button[slot=action]');
-
-      if (toast?.innerText.toLowerCase() === 'refresh') {
-        this.refreshFromUpdate();
+        clearInterval(this._refreshInterval);
       }
-    }, second * 5);
+
+      this._refreshInterval = setInterval(() => {
+        const toast = querySelectorDeep('home-assistant notification-manager ha-toast ha-button[slot=action]');
+
+        if (toast?.innerText.toLowerCase() === 'refresh') {
+          this.refreshFromUpdate();
+        }
+      }, second * 5);
 
     } catch (e) {
-      LOG(`failed to connect ${NAME}`, e);
+      this.logger.error(`failed to connect ${NAME}`, e);
     }
   }
 
@@ -130,7 +134,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
         clearInterval(this._refreshInterval);
       }
     } catch (e) {
-      LOG(`failed to disconnect ${NAME}`, e);
+      this.logger.error(`failed to disconnect ${NAME}`, e);
     }
   }
 
@@ -218,7 +222,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
 
   private async ensureNetworkAccess(sleepTime: number = second * 10, issueDetected: boolean = false): Promise<boolean> {
     if (!lastScriptSrcAtLoad) {
-      LOG('cannot confirm HA is online, could not find a url to check');
+      this.logger.info('cannot confirm HA is online, could not find a url to check');
       return false;
     }
 
@@ -229,7 +233,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
       const res = await fetch(url.toString());
       const body = await res.text();
 
-      LOG(`HA online check successful`, {
+      this.logger.info(`HA online check successful`, {
         status: res.status,
         statusText: res.statusText,
         bodyLength: body.length
@@ -269,23 +273,22 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
         : '👋';
 
     const debugElem = this._debug
-      ? html`<pre>${
-          Object.entries({
-            lastEntityUpdate: this._lastUpdated,
-            ...this.readStoredState()
-          }).map(([key,value]) => {
-            let serializedValue = value;
+      ? html`<pre>${Object.entries({
+        lastEntityUpdate: this._lastUpdated,
+        ...this.readStoredState()
+      }).map(([key, value]) => {
+        let serializedValue = value;
 
-            if (typeof value === 'string') {
-              const date = new Date(value);
+        if (typeof value === 'string') {
+          const date = new Date(value);
 
-              if (isDate(date)) {
-                serializedValue = date.toLocaleString();
-              }
-            }
+          if (isDate(date)) {
+            serializedValue = date.toLocaleString();
+          }
+        }
 
-            return `${key}: ${serializedValue}`;
-          }).join('\n')
+        return `${key}: ${serializedValue}`;
+      }).join('\n')
         }</pre>
         <ha-control-button style="width: 100%" @click="${this.resetStoredState}">
           <button type="button" class="button">Reset debug info</button>
@@ -336,7 +339,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
       schema: [
         { name: "entity", required: true, selector: { entity: {} } },
         { name: "debug", selector: { boolean: {} } },
-        { name: 'debug_only_with_info', selector: { boolean: {} }}
+        { name: 'debug_only_with_info', selector: { boolean: {} } }
       ],
       computeLabel: (schema) => {
         switch (schema.name) {
@@ -349,7 +352,7 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
         }
       },
       computeHelper: (schema) => {
-        switch (schema.name){
+        switch (schema.name) {
           case 'entity':
             return [
               'Pick an entity to track in order to detect connection issues.',
@@ -360,7 +363,6 @@ class AutoReloadCard extends LitElement implements LovelaceCard {
           default:
             return undefined;
         }
-
       }
     };
   }

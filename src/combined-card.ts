@@ -1,7 +1,9 @@
-import { css, CSSResultGroup, html, LitElement } from 'lit';
+import { css, CSSResultGroup, html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
-import { HELPERS, LOG, loadStackEditor, sleep } from './utils';
+import { HELPERS, loadStackEditor } from './utils/card-helpers';
+import { sleep } from './utils/types';
+import { UtilityCard } from './utils/utility-card';
 
 import { editorFactory } from "./combined-card-editor";
 
@@ -16,10 +18,12 @@ export const card = {
 
 const getRandomId = (): string => Math.random().toString(36).slice(2);
 
-class CombinedCard extends LitElement implements LovelaceCard {
+class CombinedCard extends UtilityCard implements LovelaceCard {
   @state() private _config?: LovelaceCardConfig;
   @state() private _helpers?;
   @state() private _forceRender: string = getRandomId();
+
+  protected readonly name: string = NAME;
 
   private _card?: LovelaceCard;
   private _hass?: HomeAssistant;
@@ -116,7 +120,7 @@ class CombinedCard extends LitElement implements LovelaceCard {
       }
     })();
 
-    LOG(`card size is ${size}`);
+    this.logger.debug(`card size is ${size}`);
 
     return size;
   }
@@ -133,7 +137,7 @@ class CombinedCard extends LitElement implements LovelaceCard {
       this._helpers = HELPERS.helpers;
     } else {
       HELPERS.whenLoaded.then(() => {
-        LOG('re-rendering card after helpers have loaded');
+        this.logger.info('re-rendering card after helpers have loaded');
         that._helpers = HELPERS.helpers;
       });
     }
@@ -148,7 +152,7 @@ class CombinedCard extends LitElement implements LovelaceCard {
 
     if (!loaded) {
       this._timer = setTimeout(() => {
-        LOG('re-render loading card');
+        this.logger.info('re-render loading card');
         that._forceRender = getRandomId();
       }, 1000);
     }
@@ -161,7 +165,7 @@ class CombinedCard extends LitElement implements LovelaceCard {
       (element as LovelaceCard).addEventListener(
         'll-rebuild',
         (ev) => {
-          LOG('rebuild event!!!');
+          this.logger.debug('rebuild event!!!');
           ev.stopPropagation();
           that._forceRender = getRandomId();
         },

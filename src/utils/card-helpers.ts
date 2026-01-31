@@ -1,28 +1,9 @@
-import * as pjson from '../package.json';
-
-export type fn = (...args: any[]) => void;
-
-const PROJECT = 'catdad utility cards';
-
-const pillStyle = (color: string) => `color: ${color}; font-weight: bold; background: #555; border-radius: 2rem`;
-const pillText = (text: string) => `%c ${text} \x1B[m`;
-
-export const LOG = (first: string, ...args: any[]) => {
-  console.log(`${pillText(`${PROJECT} v${pjson.version}`)} ${first}`, pillStyle('#bad155'), ...args);
-};
-
-export const LOG_EDITOR = (first: string, ...args: any[]) => {
-  LOG(`${pillText('editor')} ${first}`, pillStyle('#D15798'), ...args);
-}
-
-LOG('loaded');
-
-export const sleep = (time: number): Promise<undefined> => new Promise(resolve => setTimeout(() => resolve(undefined), time));
+import { type FN } from './types';
 
 // Home Assistant really needs to make this an SDK so that we can
 // stop trying to hack it. When they use these helpers, they can
 // use them synchronously, but third-party devs can't.
-export const HELPERS = ((loadCardHelpers, callbacks: fn[]) => {
+export const HELPERS = ((loadCardHelpers, callbacks: FN[]) => {
   const fileBugStr = 'Please file a bug at https://github.com/catdad-experiments/ha-combined-card and explain your setup.';
   let _helpers;
 
@@ -93,24 +74,3 @@ export const loadStackEditor = async () => {
   // @ts-ignore
   return await stackCard.constructor.getConfigElement();
 };
-
-export const speed = (time: number): Promise<void> => new Promise(r => setTimeout(() => r(), time));
-
-export const isDate = (value: unknown): value is Date => {
-  return value instanceof Date && !isNaN(value.getTime());
-};
-
-export const isNumber = (value: unknown): value is number => {
-  return typeof value === 'number' && isNaN(value) === false;
-};
-
-export const isHexString = (color: string): boolean => {
-  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color);
-};
-
-export const resolveColor = (value: string): string => {
-  return isHexString(value) ? value : `var(--${value}-color, ${value})`;
-};
-
-export type Timer = ReturnType<typeof setTimeout>;
-export type Interval = ReturnType<typeof setInterval>;

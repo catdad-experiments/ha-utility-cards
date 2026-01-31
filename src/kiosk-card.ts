@@ -2,7 +2,7 @@ import { css, CSSResultGroup, html, LitElement } from "lit";
 import { state } from "lit/decorators.js";
 import { querySelectorDeep } from "query-selector-shadow-dom";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
-import { LOG } from './utils';
+import { UtilityCard } from "./utils/utility-card";
 
 const NAME = 'kiosk-card';
 const EDITOR_NAME = `${NAME}-editor`;
@@ -13,9 +13,11 @@ export const card = {
   description: 'Hide the navigation UI for the dashboard where this card is rendered'
 };
 
-class KioskCard extends LitElement implements LovelaceCard {
+class KioskCard extends UtilityCard implements LovelaceCard {
   @state() private _config?: LovelaceCardConfig;
   @state() private _editMode: boolean = false;
+
+  protected readonly name: string = NAME;
 
   private _hass?: HomeAssistant;
 
@@ -47,7 +49,7 @@ class KioskCard extends LitElement implements LovelaceCard {
       const view = querySelectorDeep('ha-panel-lovelace hui-view-container');
       const thisCard = querySelectorDeep('kiosk-card');
 
-      // LOG('kiosk mode got elements:', { header, view, thisCard });
+      this.logger.debug('kiosk mode got elements:', { header, view, thisCard });
 
       // when this card is not being rendered, it should not apply kiosk mode
       if (!thisCard) {
@@ -66,7 +68,7 @@ class KioskCard extends LitElement implements LovelaceCard {
         view.style.paddingTop = '0px';
       }
     } catch (e) {
-      LOG('failed to connect kiosk mode', e);
+      this.logger.error('failed to connect kiosk mode', e);
     }
   }
 
@@ -75,7 +77,7 @@ class KioskCard extends LitElement implements LovelaceCard {
       const header = querySelectorDeep('ha-panel-lovelace .header');
       const view = querySelectorDeep('ha-panel-lovelace hui-view-container');
 
-      // LOG('kiosk mode got elements:', { header, view });
+      this.logger.debug('kiosk mode got elements:', { header, view });
 
       if (!header || !view) {
         throw new Error('could not find necessary elements to disconnect kiosk mode');
@@ -84,19 +86,19 @@ class KioskCard extends LitElement implements LovelaceCard {
       header.style.removeProperty('display');
       view.style.removeProperty('padding-top');
     } catch (e) {
-      LOG('failed to disconnect kiosk mode', e);
+      this.logger.error('failed to disconnect kiosk mode', e);
     }
   }
 
   connectedCallback(): void {
     super.connectedCallback()
-    // LOG('Kiosk card connected', this._editMode);
+    this.logger.debug('Kiosk card connected', this._editMode);
     this.enable();
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    // LOG('Kiosk card disconnected');
+    this.logger.debug('Kiosk card disconnected');
     this.disable();
   }
 
