@@ -6,6 +6,8 @@ import { createLogger } from "./utils/log";
 type Config = LovelaceCardConfig & {
   // this is handled by the card stack editor, don't know what its actual tyep is
   cards: any[],
+  size?: number,
+  sizeAlgorithm?: 'temp' | 'render' | 'component'
 };
 
 export const editorFactory = (NAME: string) => {
@@ -19,7 +21,7 @@ export const editorFactory = (NAME: string) => {
     @state() private _config: Config = {
       // TODO should come from the card
       type: this.cardType,
-      cards: []
+      cards: [],
     };
 
     setConfig(config: Config): void {
