@@ -3,7 +3,7 @@ import { state } from 'lit/decorators.js';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCardEditor, type LovelaceConfig } from 'custom-card-helpers';
 import { createLogger } from "./utils/log";
 
-type Config = LovelaceCardConfig & {
+export type Config = LovelaceCardConfig & {
   // this is handled by the card stack editor, don't know what its actual tyep is
   cards: any[],
   size?: number,

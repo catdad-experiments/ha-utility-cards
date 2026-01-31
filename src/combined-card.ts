@@ -1,11 +1,11 @@
 import { css, CSSResultGroup, html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
+import { type HomeAssistant, type LovelaceCard } from 'custom-card-helpers';
 import { HELPERS, loadStackEditor } from './utils/card-helpers';
 import { sleep } from './utils/types';
 import { UtilityCard } from './utils/utility-card';
 
-import { editorFactory } from "./combined-card-editor";
+import { type Config, editorFactory } from "./combined-card-editor";
 
 const NAME = 'combined-card';
 const EDITOR_NAME = `${NAME}-editor`;
@@ -19,7 +19,7 @@ export const card = {
 const getRandomId = (): string => Math.random().toString(36).slice(2);
 
 class CombinedCard extends UtilityCard implements LovelaceCard {
-  @state() private _config?: LovelaceCardConfig;
+  @state() private _config?: Config;
   @state() private _helpers?;
   @state() private _forceRender: string = getRandomId();
 
@@ -60,7 +60,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
 
   private async getSizeFromTempCard(): Promise<number> {
     return await (async function recursiveGetSize(that) {
-      const el = that._createCard(that._config as LovelaceCardConfig);
+      const el = that._createCard(that._config!);
 
       if (el && el.getCardSize) {
         const size = await el.getCardSize();
@@ -125,7 +125,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     return size;
   }
 
-  public setConfig(config: LovelaceCardConfig): void {
+  public setConfig(config: Config): void {
     if (!config || !config.cards || !Array.isArray(config.cards)) {
       throw new Error("Invalid configuration, `cards` is required");
     }
@@ -158,7 +158,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     }
 
     const element = loaded ?
-      this._createCard(this._config as LovelaceCardConfig) :
+      this._createCard(this._config!) :
       'Loading...';
 
     if (element && (element as LovelaceCard).addEventListener) {
@@ -192,7 +192,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     `;
   }
 
-  private _createCard(config: LovelaceCardConfig): LovelaceCard | null {
+  private _createCard(config: Config): LovelaceCard | null {
     // TODO does this need to be removed?
     if (!this._helpers) {
       return null;
@@ -232,7 +232,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     return document.createElement(EDITOR_NAME);
   }
 
-  static getStubConfig() {
+  static getStubConfig(): Config {
     return {
       type: `custom:${NAME}`,
       cards: [],
