@@ -226,11 +226,10 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
   // the actual element it is creating is the one in
   // combined-card-editor.ts
   public static async getConfigElement() {
-    const element = document.createElement(EDITOR_NAME);
-    // @ts-ignore
-    element.cardEditor = await loadStackEditor();
+    // this needs to load before we can render the editor
+    await loadStackEditor();
 
-    return element;
+    return document.createElement(EDITOR_NAME);
   }
 
   static getStubConfig() {
