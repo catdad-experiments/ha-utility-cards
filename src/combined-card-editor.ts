@@ -12,15 +12,15 @@ export const editorFactory = (NAME: string) => {
   class CombinedCardEditor extends LitElement implements LovelaceCardEditor {
     private _hass?: HomeAssistant;
     private _lovelace?: LovelaceConfig;
-    private _stackCardEditor?;
+
+    private cardType = `custom:${NAME}`;
+    private logger = createLogger({ name: `${NAME}-editor` });
 
     @state() private _config: Config = {
       // TODO should come from the card
-      type: 'combined-card',
+      type: this.cardType,
       cards: []
     };
-
-    private logger = createLogger({ name: 'combined-card-editor' });
 
     setConfig(config: Config): void {
       this._config = {
@@ -43,61 +43,34 @@ export const editorFactory = (NAME: string) => {
     }
 
     protected render() {
-      this.logger.debug('render', this._stackCardEditor);
+      return html`<div>
+        <div>other stuff in the editor</div>
+        <hui-stack-card-editor
+          @config-changed=${(ev) => {
+            ev.stopPropagation();
 
-      if (this._hass) {
-        this._stackCardEditor.hass = this._hass;
-      }
-
-      if (this._lovelace) {
-        this._stackCardEditor.lovelace = this._lovelace;
-      }
-
-      this._stackCardEditor.addEventListener('config-changed', ev => {
-        ev.stopPropagation();
-
-        this.configChanged({
-          ...this._config,
-          ...ev.detail.config,
-          type: `custom:${NAME}`
-        });
-      });
-
-      const thing = html`<hui-stack-card-editor
-          @config-changed=${(config) => {
-            this._config = {
+            this.configChanged({
               ...this._config,
-              cards: config.cards
-            };
+              ...ev.detail.config,
+              type: this.cardType,
+            });
           }}
-          ._config=${{ cards: this._config.cards || [], type: 'vertical-stack' }}
+          ._config=${{
+            cards: this._config.cards || [],
+            type: 'vertical-stack'
+          }}
           .hass=${this._hass}
           .lovelace=${this._lovelace}
-        />`;
-
-      // return html`<div>${this._stackCardEditor}</div>`;
-
-      return html`<div>${thing}</div>`;
+        />
+      </div>`;
     }
 
     set hass(hass: HomeAssistant) {
       this._hass = hass;
-
-      if (this._stackCardEditor) {
-        this._stackCardEditor.hass = hass;
-      }
     }
 
     set lovelace(ll: LovelaceConfig) {
       this._lovelace = ll;
-
-      if (this._stackCardEditor) {
-        this._stackCardEditor.lovelace = ll;
-      }
-    }
-
-    set cardEditor(editor) {
-      this._stackCardEditor = editor;
     }
   }
 
