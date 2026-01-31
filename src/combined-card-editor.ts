@@ -1,37 +1,36 @@
 import { html, LitElement } from "lit";
+import { state } from 'lit/decorators.js';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCardEditor, type LovelaceConfig } from 'custom-card-helpers';
 import { createLogger } from "./utils/log";
 
-const logger = createLogger({ name: 'combined-card-editor' });
+type Config = LovelaceCardConfig & {
+  // this is handled by the card stack editor, don't know what its actual tyep is
+  cards: any[],
+};
 
 export const editorFactory = (NAME: string) => {
   class CombinedCardEditor extends LitElement implements LovelaceCardEditor {
     private _hass?: HomeAssistant;
     private _lovelace?: LovelaceConfig;
     private _stackCardEditor?;
-    private _config = {};
 
-    private _setEditorConfig(config: LovelaceCardConfig) {
-      // @ts-ignore
-      if (this._stackCardEditor) {
-        this._stackCardEditor.setConfig({
-          type: 'vertical-stack',
-          cards: config.cards || []
-        });
-      }
-    }
+    @state() private _config: Config = {
+      // TODO should come from the card
+      type: 'combined-card',
+      cards: []
+    };
 
-    setConfig(config: LovelaceCardConfig): void {
+    private logger = createLogger({ name: 'combined-card-editor' });
+
+    setConfig(config: Config): void {
       this._config = {
         // I think this won't allow removing the hidden values
         // ...this._config,
         ...config
       };
-
-      this._setEditorConfig(this._config as LovelaceCardConfig);
     }
 
-    configChanged(newConfig: LovelaceCardConfig): void {
+    configChanged(newConfig: Config): void {
       const event = new Event('config-changed', {
         bubbles: true,
         composed: true
@@ -44,7 +43,7 @@ export const editorFactory = (NAME: string) => {
     }
 
     protected render() {
-      logger.debug('render', this._stackCardEditor);
+      this.logger.debug('render', this._stackCardEditor);
 
       if (this._hass) {
         this._stackCardEditor.hass = this._hass;
@@ -64,7 +63,21 @@ export const editorFactory = (NAME: string) => {
         });
       });
 
-      return html`<div>${this._stackCardEditor}</div>`;
+      const thing = html`<hui-stack-card-editor
+          @config-changed=${(config) => {
+            this._config = {
+              ...this._config,
+              cards: config.cards
+            };
+          }}
+          ._config=${{ cards: this._config.cards || [], type: 'vertical-stack' }}
+          .hass=${this._hass}
+          .lovelace=${this._lovelace}
+        />`;
+
+      // return html`<div>${this._stackCardEditor}</div>`;
+
+      return html`<div>${thing}</div>`;
     }
 
     set hass(hass: HomeAssistant) {
