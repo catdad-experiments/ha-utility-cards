@@ -8,20 +8,8 @@ const pillText = (text: string) => `%c ${text} \x1B[m`;
 
 const pill = `${pillText(SHORT)}`;
 
-/** @deprecated */
-export const LOG = (first: string, ...args: any[]) => {
-  console.log(`${pill} ${first}`, pillStyle('#bad155'), ...args);
-};
-
-type LogArgs = Parameters<typeof LOG>;
-
-/** @deprecated */
-export const LOG_EDITOR = (first: string, ...args: any[]) => {
-  LOG(`${pillText('editor')} ${first}`, pillStyle('#D15798'), ...args);
-}
-
 type Level = 'error' | 'info' | 'debug';
-type LogFunc = (...args: LogArgs) => void;
+type LogFunc = (first: string, ...rest: any) => void;
 export type Logger = Record<Level, LogFunc>;
 
 const levels: Record<Level, number> = {
@@ -30,7 +18,7 @@ const levels: Record<Level, number> = {
   debug: 1
 }
 
-const noop = () => { };
+const noop: LogFunc = () => { };
 
 export type LoggerOptions = {
   name: string,
@@ -43,8 +31,7 @@ export const createLogger = ({
   level = 'info',
   color = '#D15798'
 }: LoggerOptions): Logger => {
-  const write = (...args: LogArgs) => {
-    const [first, ...rest] = args;
+  const write: LogFunc = (first, ...rest) => {
     console.log(`${pill} ${pillText(name)} ${first}`, pillStyle('#bada55'), pillStyle(color), ...rest);
   };
 

@@ -1,6 +1,8 @@
 import { html, LitElement } from "lit";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCardEditor, type LovelaceConfig } from 'custom-card-helpers';
-import { LOG_EDITOR as LOG } from "./utils/log";
+import { createLogger } from "./utils/log";
+
+const logger = createLogger({ name: 'combined-card-editor' });
 
 export const editorFactory = (NAME: string) => {
   class CombinedCardEditor extends LitElement implements LovelaceCardEditor {
@@ -42,7 +44,7 @@ export const editorFactory = (NAME: string) => {
     }
 
     protected render() {
-      LOG('render', this._stackCardEditor);
+      logger.debug('render', this._stackCardEditor);
 
       if (this._hass) {
         this._stackCardEditor.hass = this._hass;
