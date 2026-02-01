@@ -1,4 +1,4 @@
-import { html, LitElement } from "lit";
+import { type CSSResultGroup, LitElement, html, css } from "lit";
 import { state, property } from 'lit/decorators.js';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCardEditor, type LovelaceConfig } from 'custom-card-helpers';
 import { createLogger } from "./utils/log";
@@ -19,10 +19,10 @@ export const editorFactory = (NAME: string, stubConfig: Config) => {
     @property({ attribute: false }) public hass!: HomeAssistant;
     @property({ attribute: false }) public lovelace?: LovelaceConfig;
 
-    private logger = createLogger({ name: `${NAME}-editor` });
-
     @state() private _config: Config = stubConfig;
     @state() private selectedTab: (typeof tabs)[number] = tabs[0];
+
+    private logger = createLogger({ name: `${NAME}-editor` });
 
     setConfig(config: Config): void {
       this._config = {
@@ -32,16 +32,12 @@ export const editorFactory = (NAME: string, stubConfig: Config) => {
       };
     }
 
-    configChanged(newConfig: Config): void {
-      const event = new Event('config-changed', {
+    private configChanged(newConfig: Config): void {
+      this.dispatchEvent(new CustomEvent('config-changed', {
         bubbles: true,
-        composed: true
-      });
-
-      // @ts-ignore
-      event.detail = { config: newConfig };
-
-      this.dispatchEvent(event);
+        composed: true,
+        detail: { config: newConfig }
+      }));
     }
 
     protected render() {
@@ -92,6 +88,10 @@ export const editorFactory = (NAME: string, stubConfig: Config) => {
             .exhaustive()
         }
       </div>`;
+    }
+
+    static get styles(): CSSResultGroup {
+      return css``;
     }
   }
 
