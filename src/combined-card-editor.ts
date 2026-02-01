@@ -10,9 +10,24 @@ export type Config = LovelaceCardConfig & {
   title?: string;
   size?: number;
   sizeAlgorithm?: 'temp' | 'render' | 'component';
+  stackMode: 'horizontal-stack' | 'vertical-stack';
 };
 
 const tabs = ['cards', 'settings'] as const;
+
+const schema = [
+  {
+    name: "stackMode",
+    selector: {
+      select: {
+        options: [
+          { value: "vertical-stack", label: 'vertical stack' },
+          { value: "horizontal-stack", label: 'horizontal stack' }
+        ],
+      },
+    },
+  }
+] as const;
 
 export const editorFactory = (NAME: string, stubConfig: Config) => {
   class CombinedCardEditor extends LitElement implements LovelaceCardEditor {
@@ -26,8 +41,8 @@ export const editorFactory = (NAME: string, stubConfig: Config) => {
 
     setConfig(config: Config): void {
       this._config = {
-        // I think this won't allow removing the hidden values
-        // ...this._config,
+        // apply defaults
+        ...stubConfig,
         ...config
       };
     }
@@ -76,6 +91,8 @@ export const editorFactory = (NAME: string, stubConfig: Config) => {
                 ._config=${{
                   cards: this._config.cards || [],
                   title: this._config.title,
+                  // here, the stack editor needs to know which stack it is editing
+                  // we ignore this value ourselves
                   type: 'vertical-stack'
                 }}
                 .hass=${this.hass}
@@ -83,7 +100,24 @@ export const editorFactory = (NAME: string, stubConfig: Config) => {
               />
             `)
             .with('settings', () => html`
-              <div>settings go in here</div>
+              <ha-form
+                .hass=${this.hass}
+                .data=${this._config}
+                .schema=${schema}
+                .computeLabel=${(element: (typeof schema)[number]) => {
+                  return match(element)
+                    .with({ name: 'stackMode' }, () => 'Stack mode')
+                    .otherwise(({ name }) => name);
+                }}
+                @value-changed=${(ev) => {
+                  const { stackMode } = (ev?.detail?.value || {}) as Config;
+
+                  this.configChanged({
+                    ...this._config,
+                    stackMode,
+                  });
+                }}
+              ></ha-form>
             `)
             .exhaustive()
         }

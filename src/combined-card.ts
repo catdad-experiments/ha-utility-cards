@@ -200,7 +200,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
 
     const element: LovelaceCard = this._helpers.createCardElement({
       ...config,
-      type: 'vertical-stack'
+      type: config.stackMode || CombinedCard.getStubConfig().stackMode
     });
 
     this._card = element;
@@ -237,7 +237,8 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       type: `custom:${NAME}`,
       cards: [],
       size: 0,
-      sizeAlgorithm: 'temp'
+      sizeAlgorithm: 'temp',
+      stackMode: 'vertical-stack'
     };
   }
 }
