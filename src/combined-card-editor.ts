@@ -69,14 +69,14 @@ export const editorFactory = (NAME: string, stubConfig: Config) => {
             .with('cards', () => html`
               <hui-stack-card-editor
                 @config-changed=${(ev) => {
-                ev.stopPropagation();
+                  ev.stopPropagation();
 
-                this.configChanged({
-                  ...this._config,
-                  ...ev.detail.config,
-                  type: stubConfig.type,
-                });
-              }}
+                  this.configChanged({
+                    ...this._config,
+                    ...ev.detail.config,
+                    type: stubConfig.type,
+                  });
+                }}
                 ._config=${{
                   cards: this._config.cards || [],
                   title: this._config.title,
