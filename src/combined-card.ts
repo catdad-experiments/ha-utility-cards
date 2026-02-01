@@ -130,7 +130,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       throw new Error("Invalid configuration, `cards` is required");
     }
 
-    this._config = Object.assign({}, CombinedCard.getStubConfig(), config);
+    this._config = Object.assign({}, CombinedCard.getFullConfig(), config);
     const that = this;
 
     if (HELPERS.loaded) {
@@ -174,10 +174,10 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     }
 
     const styles = loaded ? [
-      '--ha-card-border-width: 0px',
-      '--ha-card-border-color: rgba(0, 0, 0, 0)',
-      '--ha-card-box-shadow: none',
-      '--ha-card-border-radius: none'
+      ...(this._config?.hideBorder ? ['--ha-card-border-width: 0px', '--ha-card-border-color: rgba(0, 0, 0, 0)',] : []),
+      ...(this._config?.hideShadow ? ['--ha-card-box-shadow: none'] : []),
+      ...(this._config?.hideRoundedCorners ? ['--ha-card-border-radius: none'] : []),
+      ...(this._config?.hideGap ? ['--stack-card-gap: 0px'] : [])
     ] : [
       'height: 50px',
       'padding: var(--spacing, 12px)',
