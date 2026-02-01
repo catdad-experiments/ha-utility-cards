@@ -1,5 +1,5 @@
 import { html, LitElement } from "lit";
-import { state } from 'lit/decorators.js';
+import { state, property } from 'lit/decorators.js';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCardEditor, type LovelaceConfig } from 'custom-card-helpers';
 import { createLogger } from "./utils/log";
 import { match } from 'ts-pattern';
@@ -16,8 +16,8 @@ const tabs = ['cards', 'settings'] as const;
 
 export const editorFactory = (NAME: string, stubConfig: Config) => {
   class CombinedCardEditor extends LitElement implements LovelaceCardEditor {
-    private _hass?: HomeAssistant;
-    private _lovelace?: LovelaceConfig;
+    @property({ attribute: false }) public hass!: HomeAssistant;
+    @property({ attribute: false }) public lovelace?: LovelaceConfig;
 
     private logger = createLogger({ name: `${NAME}-editor` });
 
@@ -82,8 +82,8 @@ export const editorFactory = (NAME: string, stubConfig: Config) => {
                   title: this._config.title,
                   type: 'vertical-stack'
                 }}
-                .hass=${this._hass}
-                .lovelace=${this._lovelace}
+                .hass=${this.hass}
+                .lovelace=${this.lovelace}
               />
             `)
             .with('settings', () => html`
@@ -92,14 +92,6 @@ export const editorFactory = (NAME: string, stubConfig: Config) => {
             .exhaustive()
         }
       </div>`;
-    }
-
-    set hass(hass: HomeAssistant) {
-      this._hass = hass;
-    }
-
-    set lovelace(ll: LovelaceConfig) {
-      this._lovelace = ll;
     }
   }
 
