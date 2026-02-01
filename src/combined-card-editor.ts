@@ -6,9 +6,10 @@ import { match } from 'ts-pattern';
 
 export type Config = LovelaceCardConfig & {
   // this is handled by the card stack editor, don't know what its actual tyep is
-  cards: any[],
-  size?: number,
-  sizeAlgorithm?: 'temp' | 'render' | 'component'
+  cards: any[];
+  title?: string;
+  size?: number;
+  sizeAlgorithm?: 'temp' | 'render' | 'component';
 };
 
 const tabs = ['cards', 'settings'] as const;
@@ -77,9 +78,10 @@ export const editorFactory = (NAME: string, stubConfig: Config) => {
                 });
               }}
                 ._config=${{
-                cards: this._config.cards || [],
-                type: 'vertical-stack'
-              }}
+                  cards: this._config.cards || [],
+                  title: this._config.title,
+                  type: 'vertical-stack'
+                }}
                 .hass=${this._hass}
                 .lovelace=${this._lovelace}
               />
