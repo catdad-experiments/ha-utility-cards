@@ -5,7 +5,7 @@ import { HELPERS, loadStackEditor } from './utils/card-helpers';
 import { sleep } from './utils/types';
 import { UtilityCard } from './utils/utility-card';
 
-import { type Config, editorFactory } from "./combined-card-editor";
+import { type Config, type CompleteConfig, editorFactory } from "./combined-card-editor";
 
 const NAME = 'combined-card';
 const EDITOR_NAME = `${NAME}-editor`;
@@ -236,12 +236,22 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     return {
       type: `custom:${NAME}`,
       cards: [],
+      stackMode: 'vertical-stack',
+    };
+  }
+
+  static getFullConfig(): CompleteConfig {
+    return {
       size: 0,
       sizeAlgorithm: 'temp',
-      stackMode: 'vertical-stack'
+      hideBorder: true,
+      hideShadow: true,
+      hideRoundedCorners: true,
+      hideGap: false,
+      ...CombinedCard.getStubConfig(),
     };
   }
 }
 
 customElements.define(NAME, CombinedCard);
-customElements.define(EDITOR_NAME, editorFactory(NAME, CombinedCard.getStubConfig()));
+customElements.define(EDITOR_NAME, editorFactory(NAME, CombinedCard.getStubConfig(), CombinedCard.getFullConfig()));

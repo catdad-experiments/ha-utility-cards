@@ -4,14 +4,21 @@ import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCardEditor, t
 import { createLogger } from "./utils/log";
 import { match } from 'ts-pattern';
 
-export type Config = LovelaceCardConfig & {
+type CustomConfig = {
   // this is handled by the card stack editor, don't know what its actual tyep is
   cards: any[];
+  stackMode: 'horizontal-stack' | 'vertical-stack';
   title?: string;
   size?: number;
   sizeAlgorithm?: 'temp' | 'render' | 'component';
-  stackMode: 'horizontal-stack' | 'vertical-stack';
+  hideBorder?: boolean;
+  hideShadow?: boolean;
+  hideRoundedCorners?: boolean;
+  hideGap?: boolean;
 };
+
+export type Config = LovelaceCardConfig & CustomConfig;
+export type CompleteConfig = CustomConfig & Required<Omit<CustomConfig, 'title'>>;
 
 const tabs = ['cards', 'settings'] as const;
 
@@ -26,10 +33,14 @@ const schema = [
         ],
       },
     },
-  }
+  },
+  { name: "hideBorder", selector: { boolean: {} } },
+  { name: "hideShadow", selector: { boolean: {} } },
+  { name: "hideRoundedCorners", selector: { boolean: {} } },
+  { name: "hideGap", selector: { boolean: {} } },
 ] as const;
 
-export const editorFactory = (NAME: string, stubConfig: Config) => {
+export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: CompleteConfig) => {
   class CombinedCardEditor extends LitElement implements LovelaceCardEditor {
     @property({ attribute: false }) public hass!: HomeAssistant;
     @property({ attribute: false }) public lovelace?: LovelaceConfig;
@@ -48,6 +59,15 @@ export const editorFactory = (NAME: string, stubConfig: Config) => {
     }
 
     private configChanged(newConfig: Config): void {
+      const filterKeys: (keyof CustomConfig)[] = ['hideBorder', 'hideGap', 'hideRoundedCorners', 'hideShadow'];
+
+      // remove values that match the default
+      for (const key of filterKeys) {
+        if (completeConfig[key] === newConfig[key]) {
+          delete newConfig[key];
+        }
+      }
+
       this.dispatchEvent(new CustomEvent('config-changed', {
         bubbles: true,
         composed: true,
@@ -102,19 +122,30 @@ export const editorFactory = (NAME: string, stubConfig: Config) => {
             .with('settings', () => html`
               <ha-form
                 .hass=${this.hass}
-                .data=${this._config}
+                .data=${{
+                  ...completeConfig,
+                  ...this._config
+                }}
                 .schema=${schema}
                 .computeLabel=${(element: (typeof schema)[number]) => {
                   return match(element)
                     .with({ name: 'stackMode' }, () => 'Stack mode')
+                    .with({ name: 'hideBorder' }, () => 'Hide border')
+                    .with({ name: 'hideShadow' }, () => 'Hide shadow')
+                    .with({ name: 'hideRoundedCorners' }, () => 'Hide rounded corners')
+                    .with({ name: 'hideGap' }, () => 'Hide gap')
                     .otherwise(({ name }) => name);
                 }}
                 @value-changed=${(ev) => {
-                  const { stackMode } = (ev?.detail?.value || {}) as Config;
+                  const { stackMode, hideBorder, hideShadow, hideRoundedCorners, hideGap } = (ev?.detail?.value || {}) as Config;
 
                   this.configChanged({
                     ...this._config,
                     stackMode,
+                    hideBorder,
+                    hideShadow,
+                    hideRoundedCorners,
+                    hideGap,
                   });
                 }}
               ></ha-form>
