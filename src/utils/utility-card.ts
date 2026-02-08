@@ -5,9 +5,11 @@ import { type Logger, type LoggerOptions, createLogger } from './log';
 export class UtilityCard extends LitElement implements Partial<LovelaceCard> {
   protected name: string = 'utility-card';
 
-  protected loggerOptions: LoggerOptions = {
-    name: this.name,
-    level: 'info'
+  protected get loggerOptions(): LoggerOptions {
+    return {
+      name: this.name,
+      level: 'info'
+    };
   };
 
   protected get logger(): Logger {

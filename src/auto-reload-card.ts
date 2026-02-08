@@ -2,7 +2,7 @@ import { css, CSSResultGroup, html } from "lit";
 import { state } from "lit/decorators.js";
 import { querySelectorDeep } from "query-selector-shadow-dom";
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
-import { type Interval, type Timer, isDate, isNumber, sleep } from './utils/types';
+import { type Interval, type Timer, isDate, isNumber, sleep, minute, second } from './utils/types';
 import { UtilityCard } from "./utils/utility-card";
 
 const NAME = 'catdad-auto-reload-card' as const;
@@ -24,9 +24,6 @@ type Config = LovelaceCardConfig & {
   debug?: boolean;
   debug_only_with_info?: boolean;
 };
-
-const second = 1000;
-const minute = second * 60;
 
 export const card = {
   type: NAME,

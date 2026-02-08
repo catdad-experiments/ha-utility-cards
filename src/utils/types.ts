@@ -4,6 +4,8 @@ export type Interval = ReturnType<typeof setInterval>;
 
 export const sleep = (time: number): Promise<void> => new Promise(resolve => setTimeout(() => resolve(undefined), time));
 
+export const random = (length = 8) => Math.random().toString(36).slice(2, length);
+
 export const isDate = (value: unknown): value is Date => {
   return value instanceof Date && !isNaN(value.getTime());
 };
@@ -19,3 +21,6 @@ export const isHexString = (color: string): boolean => {
 export const resolveColor = (value: string): string => {
   return isHexString(value) ? value : `var(--${value}-color, ${value})`;
 };
+
+export const second = 1000;
+export const minute = second * 60;
