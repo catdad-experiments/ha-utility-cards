@@ -1,11 +1,11 @@
 import { css, CSSResultGroup, html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
+import { type HomeAssistant, type LovelaceCard } from 'custom-card-helpers';
 import { HELPERS, loadStackEditor } from './utils/card-helpers';
 import { sleep } from './utils/types';
 import { UtilityCard } from './utils/utility-card';
 
-import { editorFactory } from "./combined-card-editor";
+import { type Config, type CompleteConfig, editorFactory } from "./combined-card-editor";
 
 const NAME = 'combined-card';
 const EDITOR_NAME = `${NAME}-editor`;
@@ -19,7 +19,7 @@ export const card = {
 const getRandomId = (): string => Math.random().toString(36).slice(2);
 
 class CombinedCard extends UtilityCard implements LovelaceCard {
-  @state() private _config?: LovelaceCardConfig;
+  @state() private _config?: Config;
   @state() private _helpers?;
   @state() private _forceRender: string = getRandomId();
 
@@ -60,7 +60,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
 
   private async getSizeFromTempCard(): Promise<number> {
     return await (async function recursiveGetSize(that) {
-      const el = that._createCard(that._config as LovelaceCardConfig);
+      const el = that._createCard(that._config!);
 
       if (el && el.getCardSize) {
         const size = await el.getCardSize();
@@ -125,12 +125,12 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     return size;
   }
 
-  public setConfig(config: LovelaceCardConfig): void {
+  public setConfig(config: Config): void {
     if (!config || !config.cards || !Array.isArray(config.cards)) {
       throw new Error("Invalid configuration, `cards` is required");
     }
 
-    this._config = Object.assign({}, CombinedCard.getStubConfig(), config);
+    this._config = Object.assign({}, CombinedCard.getFullConfig(), config);
     const that = this;
 
     if (HELPERS.loaded) {
@@ -158,7 +158,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     }
 
     const element = loaded ?
-      this._createCard(this._config as LovelaceCardConfig) :
+      this._createCard(this._config!) :
       'Loading...';
 
     if (element && (element as LovelaceCard).addEventListener) {
@@ -174,10 +174,10 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     }
 
     const styles = loaded ? [
-      '--ha-card-border-width: 0px',
-      '--ha-card-border-color: rgba(0, 0, 0, 0)',
-      '--ha-card-box-shadow: none',
-      '--ha-card-border-radius: none'
+      ...(this._config?.hideBorder ? ['--ha-card-border-width: 0px', '--ha-card-border-color: rgba(0, 0, 0, 0)',] : []),
+      ...(this._config?.hideShadow ? ['--ha-card-box-shadow: none'] : []),
+      ...(this._config?.hideRoundedCorners ? ['--ha-card-border-radius: none'] : []),
+      ...(this._config?.hideGap ? ['--stack-card-gap: 0px'] : [])
     ] : [
       'height: 50px',
       'padding: var(--spacing, 12px)',
@@ -192,7 +192,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     `;
   }
 
-  private _createCard(config: LovelaceCardConfig): LovelaceCard | null {
+  private _createCard(config: Config): LovelaceCard | null {
     // TODO does this need to be removed?
     if (!this._helpers) {
       return null;
@@ -200,7 +200,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
 
     const element: LovelaceCard = this._helpers.createCardElement({
       ...config,
-      type: 'vertical-stack'
+      type: config.stackMode || CombinedCard.getStubConfig().stackMode
     });
 
     this._card = element;
@@ -226,22 +226,32 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
   // the actual element it is creating is the one in
   // combined-card-editor.ts
   public static async getConfigElement() {
-    const element = document.createElement(EDITOR_NAME);
-    // @ts-ignore
-    element.cardEditor = await loadStackEditor();
+    // this needs to load before we can render the editor
+    await loadStackEditor();
 
-    return element;
+    return document.createElement(EDITOR_NAME);
   }
 
-  static getStubConfig() {
+  static getStubConfig(): Config {
     return {
       type: `custom:${NAME}`,
       cards: [],
+      stackMode: 'vertical-stack',
+    };
+  }
+
+  static getFullConfig(): CompleteConfig {
+    return {
       size: 0,
-      sizeAlgorithm: 'temp'
+      sizeAlgorithm: 'temp',
+      hideBorder: true,
+      hideShadow: true,
+      hideRoundedCorners: true,
+      hideGap: false,
+      ...CombinedCard.getStubConfig(),
     };
   }
 }
 
 customElements.define(NAME, CombinedCard);
-customElements.define(EDITOR_NAME, editorFactory(NAME));
+customElements.define(EDITOR_NAME, editorFactory(NAME, CombinedCard.getStubConfig(), CombinedCard.getFullConfig()));
