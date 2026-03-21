@@ -31,8 +31,6 @@ export const subscribeNotifications = async (
           break;
       }
 
-      // type: current, added, removed
-      console.log('notification update:', message);
       onChange(sortBy(NOTIFICATIONS, 'created_at').reverse());
     },
     {
