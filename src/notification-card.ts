@@ -114,7 +114,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
           ${this.notifications.map((notification, idx) => html`
             ${idx > 0 ? html`<hr />` : ''}
             <div>
-              ${notification.title ? html`<h3>${notification.title}</h3>` : ''}
+              ${notification.title ? html`<div class="title">${notification.title}</div>` : ''}
               <ha-markdown breaks .hass="${this._hass}" .content="${notification.message}" />
             </div>
           `)}
@@ -146,6 +146,12 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
         flex-direction: column;
         gap: calc(var(--spacing, 12px) / 4);
         background: var(--catdad-background-color);
+      }
+
+      .title {
+        font-size: 1.2rem;
+        line-height: 1.5;
+        font-weight: bold;
       }
     `;
   }
