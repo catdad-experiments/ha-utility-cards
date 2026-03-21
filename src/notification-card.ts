@@ -82,13 +82,13 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
   connectedCallback(): void {
     super.connectedCallback();
     this.mounted = true;
-    this.logger.debug('notification card mounted', this._editMode ? 'in edit mode' : '');
+    this.logger.debug('notification card mounted', this._editMode ? ' in edit mode' : '');
     this.connect();
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.logger.debug('notification card unmounted', this._editMode ? 'in edit mode' : '');
+    this.logger.debug('notification card unmounted', this._editMode ? ' in edit mode' : '');
     this.disconnect();
     this.mounted = false;
   }
