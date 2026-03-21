@@ -2,7 +2,9 @@ import { type CSSResultGroup, css, html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
 import type { Connection, UnsubscribeFunc } from 'home-assistant-js-websocket';
+import { compact } from 'es-toolkit';
 
+import { resolveColor } from './utils/types';
 import { UtilityCard } from './utils/utility-card';
 import { type PersistedNotification, subscribeNotifications } from './utils/notificataion-subscribe';
 
@@ -11,6 +13,8 @@ const NAME = 'catdad-notification-card' as const;
 type Config = LovelaceCardConfig & {
   type: `custom:${typeof NAME}`;
   debug?: boolean;
+  backgroundColor?: string;
+  hrColor?: string;
 };
 
 export const card = {
@@ -20,7 +24,7 @@ export const card = {
 };
 
 class NotificationCard extends UtilityCard implements LovelaceCard {
-  @state() private _config?: Config;
+  @state() private _config: Config = { type: 'custom:catdad-notification-card' };
   @state() private _editMode: boolean = false;
   @state() private notifications: PersistedNotification[] = [];
 
@@ -97,8 +101,15 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       return;
     }
 
+    const config = this._config;
+
+    const styles = compact([
+      ...(config.backgroundColor ? [`--catdad-background-color: ${resolveColor(config.backgroundColor)}`] : []),
+      ...(config.hrColor ? [`--catdad-hr-color: ${resolveColor(config.hrColor)}`] : [])
+    ]);
+
     return html`
-      <ha-card style=${`${this.showCard() ? '' : 'display: none'}`}>
+      <ha-card style="${styles.join(';')}">
         <div class="root">
           ${this.notifications.map((notification, idx) => html`
             ${idx > 0 ? html`<hr />` : ''}
@@ -120,7 +131,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
 
       hr {
         width: 100%;
-        border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+        border-color: var(--catdad-hr-color, var(--ha-card-border-color, var(--divider-color, #e0e0e0)));
         border-top: 0;
         border-bottom: 1;
         border-left: 0;
@@ -133,6 +144,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
         display: flex;
         flex-direction: column;
         gap: calc(var(--spacing, 12px) / 4);
+        background: var(--catdad-background-color);
       }
     `;
   }
@@ -144,11 +156,31 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
           name: 'debug',
           selector: { boolean: {} }
         },
+        {
+          name: 'backgroundColor',
+          selector: {
+            ui_color: {
+              include_state: false,
+            },
+          },
+        },
+        {
+          name: 'hrColor',
+          selector: {
+            ui_color: {
+              include_state: false,
+            },
+          },
+        },
       ],
       computeLabel: (schema: { name: keyof Config }) => {
         switch (schema.name) {
           case 'debug':
             return 'Render debug information on the card';
+          case 'backgroundColor':
+            return 'Background color';
+          case 'hrColor':
+            return 'Color of the line between notifications'
           default:
             return undefined;
         }
