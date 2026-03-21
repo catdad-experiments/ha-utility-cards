@@ -31,7 +31,15 @@ export const subscribeNotifications = async (
           break;
       }
 
-      onChange(sortBy(NOTIFICATIONS, 'created_at').reverse());
+      onChange(
+        sortBy(NOTIFICATIONS, 'created_at')
+          .reverse()
+          .map(({ notification_id, message, ...rest }) => ({
+            ...rest,
+            notification_id: `${notification_id}`,
+            message: `${message}`
+          }))
+      );
     },
     {
       type: 'persistent_notification/subscribe',
