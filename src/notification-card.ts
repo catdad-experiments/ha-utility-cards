@@ -1,6 +1,5 @@
 import { type CSSResultGroup, css, html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { match } from 'ts-pattern';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
 import type { Connection, UnsubscribeFunc } from 'home-assistant-js-websocket';
 
@@ -26,11 +25,14 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
   @state() private notifications: PersistedNotification[] = [];
 
   protected readonly name: string = NAME;
-  protected debug = true;
 
   private _hass?: HomeAssistant;
   private _unsubscribe?: UnsubscribeFunc;
   private mounted = false;
+
+  get debug(): boolean {
+    return !!this._config?.debug;
+  }
 
   set hass(hass: HomeAssistant) {
     this._hass = hass;
@@ -49,7 +51,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
   }
 
   private showCard(): boolean {
-    return true;
+    return this.debug || !!this.notifications.length;
   }
 
   private async connect(): Promise<void> {
@@ -91,14 +93,20 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
   }
 
   protected render() {
+    if (this.showCard() === false) {
+      return;
+    }
+
     return html`
       <ha-card style=${`${this.showCard() ? '' : 'display: none'}`}>
         <div class="root">
-          ${this.notifications.map((notification, idx) => html`<div>
+          ${this.notifications.map((notification, idx) => html`
             ${idx > 0 ? html`<hr />` : ''}
-            <h3>${notification.title}</h3>
-            <div>${notification.message}</div>
-          </div>`)}
+            <div>
+              ${notification.title ? html`<h3>${notification.title}</h3>` : ''}
+              <ha-markdown breaks .hass="${this._hass}" .content="${notification.message}" />
+            </div>
+          `)}
         </div>
       </ha-card>
     `;
