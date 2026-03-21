@@ -1,12 +1,11 @@
-import { type CSSResultGroup, type TemplateResult, css, html } from 'lit';
+import { type CSSResultGroup, css, html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { match } from 'ts-pattern';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
-import { fireEvent, getMainElement } from './utils/events';
+import type { Connection, UnsubscribeFunc } from 'home-assistant-js-websocket';
 
-import { type Connection, type UnsubscribeFunc, subscribeRenderTemplate } from './utils/template-subscriber';
 import { UtilityCard } from './utils/utility-card';
-import { subscribeNotifications } from './utils/notificataion-subscribe';
+import { type PersistedNotification, subscribeNotifications } from './utils/notificataion-subscribe';
 
 const NAME = 'catdad-notification-card' as const;
 
@@ -24,6 +23,7 @@ export const card = {
 class NotificationCard extends UtilityCard implements LovelaceCard {
   @state() private _config?: Config;
   @state() private _editMode: boolean = false;
+  @state() private notifications: PersistedNotification[] = [];
 
   protected readonly name: string = NAME;
   protected debug = true;
@@ -62,11 +62,8 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
     this.disconnect();
 
     this._unsubscribe = await subscribeNotifications(connection, result => {
-      this.logger.debug(`notifications update:`, result, `continue: ${this.mounted}`);
-
-      if (this.mounted === false) {
-        return;
-      }
+      this.logger.info(`notifications update:`, result, `continue: ${this.mounted}`);
+      this.notifications = result;
 
       // TODO use notifications
     });
@@ -97,7 +94,11 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
     return html`
       <ha-card style=${`${this.showCard() ? '' : 'display: none'}`}>
         <div class="root">
-          this is the notification card
+          ${this.notifications.map((notification, idx) => html`<div>
+            ${idx > 0 ? html`<hr />` : ''}
+            <h3>${notification.title}</h3>
+            <div>${notification.message}</div>
+          </div>`)}
         </div>
       </ha-card>
     `;
@@ -109,11 +110,19 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
         overflow: hidden;
       }
 
+      hr {
+        width: 100%;
+        border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+        border-top: 0;
+        border-bottom: 1;
+        border-left: 0;
+        border-right: 0;
+        margin: var(--spacing, 12px) 0;
+      }
+
       .root {
         padding: var(--spacing, 12px);
         display: flex;
-        align-items: center;
-        justify-content: center;
         flex-direction: column;
         gap: calc(var(--spacing, 12px) / 4);
       }
