@@ -18,8 +18,8 @@ export const isHexString = (color: string): boolean => {
   return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color);
 };
 
-export const resolveColor = (value: string): string => {
-  return isHexString(value) ? value : `var(--${value}-color, ${value})`;
+export const resolveColor = (value: string, defaultValue?: string): string => {
+  return isHexString(value) ? value : `var(--${value}-color, ${defaultValue || value})`;
 };
 
 export const second = 1000;

@@ -105,7 +105,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
 
     const styles = compact([
       ...(config.backgroundColor ? [`--catdad-background-color: ${resolveColor(config.backgroundColor)}`] : []),
-      ...(config.hrColor ? [`--catdad-hr-color: ${resolveColor(config.hrColor)}`] : [])
+      ...(config.hrColor ? [`--catdad-hr-color: ${resolveColor(config.hrColor, 'var(--catdad-default-hr)')}`] : [])
     ]);
 
     return html`
@@ -130,8 +130,9 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       }
 
       hr {
+        --catdad-default-hr: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
         width: 100%;
-        border-color: var(--catdad-hr-color, var(--ha-card-border-color, var(--divider-color, #e0e0e0)));
+        border-color: var(--catdad-hr-color, var(--catdad-default-hr));
         border-top: 0;
         border-bottom: 1;
         border-left: 0;
