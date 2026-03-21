@@ -11,6 +11,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "es-toolkit": "^1.45.1",
     "home-assistant-js-websocket": "^9.6.0",
     "query-selector-shadow-dom": "^1.0.1",
     "ts-pattern": "^5.9.0"
