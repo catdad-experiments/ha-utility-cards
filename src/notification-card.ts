@@ -177,24 +177,19 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
   static get styles(): CSSResultGroup {
     return css`
       ha-card {
+        --catdad-border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
+
         overflow: hidden;
         background: none;
-      }
-
-      hr {
-        --catdad-default-hr: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
-        width: 100%;
-        border-color: var(--catdad-hr-color, var(--catdad-default-hr));
-        border-top: 0;
-        border-bottom: 1;
-        border-left: 0;
-        border-right: 0;
+        border-width: 0;
+        border-style: none;
+        border-radius: 0;
       }
 
       .root {
         display: flex;
         flex-direction: column;
-        gap: calc(var(--spacing, 12px) / 4);
+        gap: calc(var(--spacing, 12px) / 3);
         background: var(--catdad-background-color, none);
       }
 
@@ -208,9 +203,21 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
 
       .notification {
         padding: var(--spacing, 12px);
-        border-radius: calc(var(--ha-card-border-radius, var(--ha-border-radius-lg)) / 3);
+        border-radius: calc(var(--catdad-border-radius) / 3);
         color: var(--catdad-text);
         background: var(--catdad-background);
+
+        border-width: var(--ha-card-border-width, 1px);
+        border-style: solid;
+        border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+      }
+      .notification:first-child {
+        border-top-right-radius: var(--catdad-border-radius);
+        border-top-left-radius: var(--catdad-border-radius);
+      }
+      .notification:last-child {
+        border-bottom-right-radius: var(--catdad-border-radius);
+        border-bottom-left-radius: var(--catdad-border-radius);
       }
 
       .title {
