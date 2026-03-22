@@ -46,11 +46,19 @@ const parseId = (id: string): IDData => {
   );
 };
 
-const STYLE: Record<IDData['level'], { background: string, text: string, border: string }> = {
-  success: { background: '#1C7C54', text: textFromBackground('#1C7C54'), border: lightness('#1C7C54', 1.25) },
-  error: { background: '#C14953', text: textFromBackground('#C14953'), border: lightness('#C14953', 1.25) },
-  info: { background: '#456990', text: textFromBackground('#456990'), border: lightness('#456990', 1.25) },
-  warning: { background: '#F6C304', text: textFromBackground('#F6C304'), border: lightness('#F6C304', 1.25) },
+type NotificationStyle = { background: string, text: string, border: string };
+
+const createStyle = (color: string): NotificationStyle => ({
+  background: color,
+  text: textFromBackground(color),
+  border: lightness(color, 1.25)
+})
+
+const STYLE: Record<IDData['level'], NotificationStyle> = {
+  success: createStyle('#1C7C54'),
+  error: createStyle('#C14953'),
+  warning: createStyle('#F6C304'),
+  info: createStyle('#456990'),
   neutral: {
     background: 'var(--ha-card-background, var(--card-background-color, #fff))',
     text: 'var(--primary-text-color)',
