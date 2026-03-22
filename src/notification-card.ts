@@ -122,19 +122,17 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
     ]);
 
     return html`
-      <ha-card style="${styles.join(';')}">
-        <div class="root">
-          ${this.notifications.map((notification) => {
-            const data = parseId(notification.notification_id);
+      <ha-card class="root" style="${styles.join(';')}">
+        ${this.notifications.map((notification) => {
+          const data = parseId(notification.notification_id);
 
-            return html`
-              <div class="notification ${data.level}">
-                ${notification.title ? html`<div class="title">${notification.title}</div>` : ''}
-                <ha-markdown breaks .hass="${this._hass}" .content="${notification.message}" />
-              </div>
-            `;
-          })}
-        </div>
+          return html`
+            <div class="notification ${data.level}">
+              ${notification.title ? html`<div class="title">${notification.title}</div>` : ''}
+              <ha-markdown breaks .hass="${this._hass}" .content="${notification.message}" />
+            </div>
+          `;
+        })}
       </ha-card>
     `;
   }
