@@ -137,7 +137,6 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
         border-bottom: 1;
         border-left: 0;
         border-right: 0;
-        margin: var(--spacing, 12px) 0;
       }
 
       .root {
