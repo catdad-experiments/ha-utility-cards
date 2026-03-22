@@ -1,6 +1,6 @@
 import { type CSSResultGroup, css, html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
+import { type HomeAssistant, type LovelaceCard } from 'custom-card-helpers';
 import type { Connection, UnsubscribeFunc } from 'home-assistant-js-websocket';
 
 import { HELPERS } from './utils/card-helpers';
@@ -10,14 +10,17 @@ import { textFromBackground } from './utils/color';
 
 const NAME = 'catdad-notification-card' as const;
 
-type CompleteConfig = {
+type Config = {
   type: `custom:${typeof NAME}`;
   heading?: string;
   headingStyle: 'title' | 'subtitle';
   debug?: boolean;
 };
 
-type Config = LovelaceCardConfig & CompleteConfig;
+const getStubConfig = (): Config => ({
+  type: `custom:${NAME}`,
+  headingStyle: 'title'
+});
 
 export const card = {
   type: NAME,
@@ -52,7 +55,7 @@ const STYLE: Record<IDData['level'], { background: string, text: string }> = {
 };
 
 class NotificationCard extends UtilityCard implements LovelaceCard {
-  @state() private _config: Config = { type: 'custom:catdad-notification-card' };
+  @state() private _config: Config = getStubConfig();
   @state() private _editMode: boolean = false;
   @state() private notifications: PersistedNotification[] = [];
   @state() private _helpers?;
@@ -80,7 +83,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
   }
 
   public setConfig(config: Config): void {
-    this._config = Object.assign({}, NotificationCard.getFullConfig(), config);
+    this._config = Object.assign({}, getStubConfig(), config);
   }
 
   private showCard(): boolean {
@@ -254,16 +257,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
   }
 
   static getStubConfig(): Config {
-    return {
-      type: `custom:${NAME}`,
-      headingStyle: 'title'
-    };
-  }
-
-  static getFullConfig(): CompleteConfig {
-    return {
-      ...NotificationCard.getStubConfig(),
-    };
+    return getStubConfig();
   }
 }
 
