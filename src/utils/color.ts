@@ -1,8 +1,8 @@
-import convert from "color-convert";
+import convert from 'color-convert';
 
 export const textFromBackground = (background: string): string => {
-  const [h, s, l] = convert.hex.hsl(background.replace(/#/g, ''));
-  const [,,v] = convert.hex.hsv(background.replace(/#/g, ''));
+  const [h, s] = convert.hex.hsl(background.replace(/#/g, ''));
+  const [, , v] = convert.hex.hsv(background.replace(/#/g, ''));
 
   const text = v < 80 ?
     // color is dark, use light text
