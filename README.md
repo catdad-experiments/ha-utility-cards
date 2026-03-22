@@ -1,5 +1,7 @@
 # Home Assistant utility cards
 
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/catdad-experiments/ha-utility-cards/total)
+
 This is a bunch of Home Assisatant Lovelace cards that enhance other cards or dashboard functionality. All cards include a visual editor so you can easily add them.
 
 ## Installation
