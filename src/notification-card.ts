@@ -6,7 +6,7 @@ import type { Connection, UnsubscribeFunc } from 'home-assistant-js-websocket';
 import { HELPERS } from './utils/card-helpers';
 import { UtilityCard } from './utils/utility-card';
 import { type PersistedNotification, subscribeNotifications } from './utils/notificataion-subscribe';
-import { textFromBackground } from './utils/color';
+import { lightness, textFromBackground } from './utils/color';
 
 const NAME = 'catdad-notification-card' as const;
 
@@ -46,12 +46,16 @@ const parseId = (id: string): IDData => {
   );
 };
 
-const STYLE: Record<IDData['level'], { background: string, text: string }> = {
-  success: { background: '#1C7C54', text: textFromBackground('#1C7C54') },
-  error: { background: '#C14953', text: textFromBackground('#C14953') },
-  info: { background: '#456990', text: textFromBackground('#456990') },
-  warning: { background: '#F6C304', text: textFromBackground('#F6C304') },
-  neutral: { background: 'var(--ha-card-background, var(--card-background-color, #fff))', text: 'var(--primary-text-color)' }
+const STYLE: Record<IDData['level'], { background: string, text: string, border: string }> = {
+  success: { background: '#1C7C54', text: textFromBackground('#1C7C54'), border: lightness('#1C7C54', 1.25) },
+  error: { background: '#C14953', text: textFromBackground('#C14953'), border: lightness('#C14953', 1.25) },
+  info: { background: '#456990', text: textFromBackground('#456990'), border: lightness('#456990', 1.25) },
+  warning: { background: '#F6C304', text: textFromBackground('#F6C304'), border: lightness('#F6C304', 1.25) },
+  neutral: {
+    background: 'var(--ha-card-background, var(--card-background-color, #fff))',
+    text: 'var(--primary-text-color)',
+    border: 'var(--ha-card-border-color, var(--divider-color, #e0e0e0))'
+  }
 };
 
 class NotificationCard extends UtilityCard implements LovelaceCard {
@@ -161,10 +165,14 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       <ha-card class="root">
         ${this.notifications.map((notification) => {
           const data = parseId(notification.notification_id);
-          const style = `--catdad-background: ${STYLE[data.level].background}; --catdad-text: ${STYLE[data.level].text}`;
+          const style = [
+            `--catdad-background: ${STYLE[data.level].background}`,
+            `--catdad-text: ${STYLE[data.level].text}`,
+            `--catdad-border: ${STYLE[data.level].border}`,
+          ];
 
           return html`
-            <div class="notification" style="${style}">
+            <div class="notification" style="${style.join(';')}">
               ${notification.title ? html`<div class="title">${notification.title}</div>` : ''}
               <ha-markdown breaks .hass="${this._hass}" .content="${notification.message}" />
             </div>
@@ -204,12 +212,13 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       .notification {
         padding: var(--spacing, 12px);
         border-radius: calc(var(--catdad-border-radius) / 3);
+
         color: var(--catdad-text);
         background: var(--catdad-background);
+        border-color: var(--catdad-border);
 
         border-width: var(--ha-card-border-width, 1px);
         border-style: solid;
-        border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
       }
       .notification:first-child {
         border-top-right-radius: var(--catdad-border-radius);
