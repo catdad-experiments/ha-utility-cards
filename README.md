@@ -15,6 +15,7 @@ In HACS, add the repo `https://github.com/catdad-experiments/ha-utility-cards` a
 * [`catdad-auto-reload-card`](#auto-reload-card)
 * [`catdad-back-button-card`](#back-button-card)
 * [`catdad-auto-light-dark-mode-card`](#automatic-lightdark-mode-card)
+* [`catdad-homepage-card](#homepage-card)
 
 ## Combined Card
 
@@ -66,3 +67,9 @@ This card can automatically switch your dashboard between light and dark mode ba
 You can optionally also use it for manual control:
 
 <img width="364" height="106" alt="image" src="https://github.com/user-attachments/assets/7dbd1ddf-cf30-486f-8c11-6a49fb93fcc1" />
+
+## Homepage Card
+
+When this card is placed on a dashboard, that dashboard becomes the "homepage". If you navigate away and leave the page idle for a while, this card will make sure to navigate back to the homepage. You can combine it with the built-in visibility settings to control when the card has effect.
+
+I use this on my wall panel to make sure it always goes back to the default page after someone walks away.
