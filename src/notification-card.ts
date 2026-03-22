@@ -2,21 +2,22 @@ import { type CSSResultGroup, css, html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { type HomeAssistant, type LovelaceCardConfig, type LovelaceCard } from 'custom-card-helpers';
 import type { Connection, UnsubscribeFunc } from 'home-assistant-js-websocket';
-import { compact } from 'es-toolkit';
 
-import { resolveColor } from './utils/types';
+import { HELPERS } from './utils/card-helpers';
 import { UtilityCard } from './utils/utility-card';
 import { type PersistedNotification, subscribeNotifications } from './utils/notificataion-subscribe';
 import { textFromBackground } from './utils/color';
 
 const NAME = 'catdad-notification-card' as const;
 
-type Config = LovelaceCardConfig & {
+type CompleteConfig = {
   type: `custom:${typeof NAME}`;
+  heading?: string;
+  headingStyle: 'title' | 'subtitle';
   debug?: boolean;
-  backgroundColor?: string;
-  hrColor?: string;
 };
+
+type Config = LovelaceCardConfig & CompleteConfig;
 
 export const card = {
   type: NAME,
@@ -54,6 +55,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
   @state() private _config: Config = { type: 'custom:catdad-notification-card' };
   @state() private _editMode: boolean = false;
   @state() private notifications: PersistedNotification[] = [];
+  @state() private _helpers?;
 
   protected readonly name: string = NAME;
 
@@ -78,7 +80,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
   }
 
   public setConfig(config: Config): void {
-    this._config = Object.assign({}, NotificationCard.getStubConfig(), config);
+    this._config = Object.assign({}, NotificationCard.getFullConfig(), config);
   }
 
   private showCard(): boolean {
@@ -98,6 +100,8 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       this.logger.info(`notifications update:`, result, `continue: ${this.mounted}`);
       this.notifications = result;
     });
+
+    this._helpers = await HELPERS.helpers;
   }
 
   private disconnect(): void {
@@ -121,20 +125,37 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
     this.mounted = false;
   }
 
+  createHeading() {
+    if (!this._helpers) {
+      return;
+    }
+
+    const { heading, headingStyle } = this._config;
+
+    if (!heading) {
+      return;
+    }
+
+    const element: LovelaceCard = this._helpers.createCardElement({
+      type:'heading',
+      heading_style: headingStyle,
+      heading: heading
+    });
+    element.hass = this._hass;
+
+    return html`<div class="heading" style="--catdad-heading-height: ${headingStyle === 'title' ? 'var(--row-height, 56px)' : 'initial'}">
+      ${element}
+    </div>`;
+  }
+
   protected render() {
     if (this.showCard() === false) {
       return;
     }
 
-    const config = this._config;
-
-    const styles = compact([
-      ...(config.backgroundColor ? [`--catdad-background-color: ${resolveColor(config.backgroundColor)}`] : []),
-      ...(config.hrColor ? [`--catdad-hr-color: ${resolveColor(config.hrColor, 'var(--catdad-default-hr)')}`] : [])
-    ]);
-
     return html`
-      <ha-card class="root" style="${styles.join(';')}">
+      ${this.createHeading()}
+      <ha-card class="root">
         ${this.notifications.map((notification) => {
           const data = parseId(notification.notification_id);
           const style = `--catdad-background: ${STYLE[data.level].background}; --catdad-text: ${STYLE[data.level].text}`;
@@ -174,6 +195,14 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
         background: var(--catdad-background-color, none);
       }
 
+      .heading {
+        margin-bottom: var(--spacing, 12px);
+        display: flex;
+        flex-direction: column;
+        justify-content: end;
+        min-height: var(--catdad-heading-height);
+      }
+
       .notification {
         padding: var(--spacing, 12px);
         border-radius: calc(var(--ha-card-border-radius, var(--ha-border-radius-lg)) / 3);
@@ -192,35 +221,25 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
   public static getConfigForm() {
     return {
       schema: [
-        {
-          name: 'debug',
-          selector: { boolean: {} }
-        },
-        {
-          name: 'backgroundColor',
-          selector: {
-            ui_color: {
-              include_state: false,
-            },
-          },
-        },
-        {
-          name: 'hrColor',
-          selector: {
-            ui_color: {
-              include_state: false,
-            },
-          },
-        },
+        { name: 'heading', selector: { text: {} } },
+        { name: 'headingStyle', selector: {
+          select: {
+            options: [
+              { value: "title", label: 'Title' },
+              { value: "subtitle", label: 'Subtitle' }
+            ],
+          }
+        }},
+        { name: 'debug', selector: { boolean: {} } },
       ],
       computeLabel: (schema: { name: keyof Config }) => {
         switch (schema.name) {
+          case 'heading':
+            return 'Heading';
+          case 'headingStyle':
+            return 'Heading style';
           case 'debug':
             return 'Render debug information on the card';
-          case 'backgroundColor':
-            return 'Background color';
-          case 'hrColor':
-            return 'Color of the line between notifications'
           default:
             return undefined;
         }
@@ -234,9 +253,16 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
     };
   }
 
-  static getStubConfig(): Partial<Config> & Pick<Config, 'type'> {
+  static getStubConfig(): Config {
     return {
       type: `custom:${NAME}`,
+      headingStyle: 'title'
+    };
+  }
+
+  static getFullConfig(): CompleteConfig {
+    return {
+      ...NotificationCard.getStubConfig(),
     };
   }
 }
