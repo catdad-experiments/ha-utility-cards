@@ -23,6 +23,21 @@ export const card = {
   description: 'Show persistent notications on a card'
 };
 
+type IDData = {
+  level: 'success' | 'error' | 'info' | 'neutral'
+}
+
+const parseId = (id: string): IDData => {
+  const params = new URLSearchParams(id);
+
+  const level = (['success', 'error', 'info', 'neutral'] satisfies IDData['level'][])
+    .includes(params.get('level') as IDData['level'])
+      ? params.get('level') as IDData['level']
+      : 'neutral';
+
+  return { level };
+};
+
 class NotificationCard extends UtilityCard implements LovelaceCard {
   @state() private _config: Config = { type: 'custom:catdad-notification-card' };
   @state() private _editMode: boolean = false;
@@ -70,8 +85,6 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
     this._unsubscribe = await subscribeNotifications(connection, result => {
       this.logger.info(`notifications update:`, result, `continue: ${this.mounted}`);
       this.notifications = result;
-
-      // TODO use notifications
     });
   }
 
@@ -111,13 +124,16 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
     return html`
       <ha-card style="${styles.join(';')}">
         <div class="root">
-          ${this.notifications.map((notification, idx) => html`
-            ${idx > 0 ? html`<hr />` : ''}
-            <div>
-              ${notification.title ? html`<div class="title">${notification.title}</div>` : ''}
-              <ha-markdown breaks .hass="${this._hass}" .content="${notification.message}" />
-            </div>
-          `)}
+          ${this.notifications.map((notification) => {
+            const data = parseId(notification.notification_id);
+
+            return html`
+              <div class="notification ${data.level}">
+                ${notification.title ? html`<div class="title">${notification.title}</div>` : ''}
+                <ha-markdown breaks .hass="${this._hass}" .content="${notification.message}" />
+              </div>
+            `;
+          })}
         </div>
       </ha-card>
     `;
@@ -127,6 +143,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
     return css`
       ha-card {
         overflow: hidden;
+        background: none;
       }
 
       hr {
@@ -140,17 +157,41 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       }
 
       .root {
-        padding: var(--spacing, 12px);
         display: flex;
         flex-direction: column;
         gap: calc(var(--spacing, 12px) / 4);
-        background: var(--catdad-background-color);
+        background: var(--catdad-background-color, none);
+      }
+
+      .notification {
+        padding: var(--spacing, 12px);
+        border-radius: calc(var(--ha-card-border-radius, var(--ha-border-radius-lg)) / 3);
       }
 
       .title {
         font-size: 1.2rem;
         line-height: 1.5;
         font-weight: bold;
+      }
+
+      .success {
+        color: #D5E7E0;
+        background: #1C7C54;
+      }
+
+      .error {
+        color: #F0D2D4;
+        background: #C14953;
+      }
+
+      .info {
+        color: #d1dae4;
+        background: #456990;
+      }
+
+      .neutral {
+        color: var(--primary-text-color);
+        background: var(--ha-card-background, var(--card-background-color, #fff));
       }
     `;
   }
