@@ -10,7 +10,7 @@ export const textFromBackground = (background: string): string => {
     // color is dark, use light text
     convert.hsl.hex([h, s, 85]) :
     // color is light, use dark text
-    convert.hsl.hex([h, s, 15]);
+    convert.hsl.hex([h, s, 20]);
 
   return `#${text}`;
 };
