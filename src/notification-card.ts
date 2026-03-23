@@ -2,6 +2,7 @@ import { type CSSResultGroup, css, html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { type HomeAssistant, type LovelaceCard } from 'custom-card-helpers';
 import type { Connection, UnsubscribeFunc } from 'home-assistant-js-websocket';
+import { defaults } from 'es-toolkit/compat';
 
 import { HELPERS } from './utils/card-helpers';
 import { UtilityCard } from './utils/utility-card';
@@ -45,9 +46,9 @@ const parseId = (id: string): IDData => {
   const icon = params.get('icon') || undefined;
   const color = params.get('color') || undefined;
 
-  return Object.assign(
+  return defaults(
+    { level, icon, color },
     { level: 'neutral' } as IDData,
-    { level, icon, color }
   );
 };
 
