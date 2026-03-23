@@ -29,7 +29,8 @@ export const card = {
 };
 
 type IDData = {
-  level: 'success' | 'error' | 'warning' | 'info' | 'neutral'
+  level: 'success' | 'error' | 'warning' | 'info' | 'neutral',
+  icon?: string;
 }
 
 const parseId = (id: string): IDData => {
@@ -40,9 +41,11 @@ const parseId = (id: string): IDData => {
       ? params.get('level') as IDData['level']
       : undefined;
 
+  const icon = params.get('icon') || undefined;
+
   return Object.assign(
     { level: 'neutral' } as IDData,
-    { level }
+    { level, icon }
   );
 };
 
@@ -172,17 +175,29 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       ${this.createHeading()}
       <ha-card class="root">
         ${this.notifications.map((notification) => {
-          const data = parseId(notification.notification_id);
+          const { level, icon} = parseId(notification.notification_id);
           const style = [
-            `--catdad-background: ${STYLE[data.level].background}`,
-            `--catdad-text: ${STYLE[data.level].text}`,
-            `--catdad-border: ${STYLE[data.level].border}`,
+            `--catdad-background: ${STYLE[level].background}`,
+            `--catdad-text: ${STYLE[level].text}`,
+            `--catdad-border: ${STYLE[level].border}`,
           ];
 
           return html`
             <div class="notification" style="${style.join(';')}">
-              ${notification.title ? html`<div class="title">${notification.title}</div>` : ''}
-              <ha-markdown breaks .hass="${this._hass}" .content="${notification.message}" />
+              ${icon && html`
+                <div class="icon-container">
+                  <ha-state-icon
+                    slot="icon"
+                    .icon=${icon}
+                    .stateObj=${undefined}
+                    .hass=${this._hass}
+                  ></ha-state-icon>
+                </div>
+              `}
+              <div>
+                ${notification.title ? html`<div class="title">${notification.title}</div>` : ''}
+                <ha-markdown breaks .hass="${this._hass}" .content="${notification.message}" />
+              </div>
             </div>
           `;
         })}
@@ -219,7 +234,10 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
 
       .notification {
         padding: var(--spacing, 12px);
-        border-radius: calc(var(--catdad-border-radius) / 3);
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+        align-items: center;
 
         color: var(--catdad-text);
         background: var(--catdad-background);
@@ -227,6 +245,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
 
         border-width: var(--ha-card-border-width, 1px);
         border-style: solid;
+        border-radius: calc(var(--catdad-border-radius) / 3);
       }
       .notification:first-child {
         border-top-right-radius: var(--catdad-border-radius);
@@ -241,6 +260,23 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
         font-size: 1.2rem;
         line-height: 1.5;
         font-weight: bold;
+      }
+
+      .icon-container {
+        position: relative;
+        flex: none;
+        margin-right: 10px;
+        margin-inline-start: initial;
+        margin-inline-end: 10px;
+        direction: var(--direction);
+        transition: transform 180ms ease-in-out;
+      }
+
+      .icon-container ha-state-icon {
+        --tile-icon-color: var(--catdad-text);
+        --icon-primary-color: var(--catdad-text);
+        padding: 6px;
+        user-select: none;
       }
     `;
   }
