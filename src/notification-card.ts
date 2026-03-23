@@ -305,7 +305,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
           case 'headingStyle':
             return 'Heading style';
           case 'debug':
-            return 'Render debug information on the card';
+            return 'Enable debug logging for this card';
           default:
             return undefined;
         }
