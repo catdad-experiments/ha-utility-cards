@@ -118,7 +118,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
     this.disconnect();
 
     this._unsubscribe = await subscribeNotifications(connection, result => {
-      this.logger.info(`notifications update:`, result, `continue: ${this.mounted}`);
+      this.logger.debug(`notifications update:`, result, `continue: ${this.mounted}`);
       this.notifications = result;
     });
 
