@@ -31,6 +31,7 @@ export const card = {
 type IDData = {
   level: 'success' | 'error' | 'warning' | 'info' | 'neutral',
   icon?: string;
+  color?: string;
 }
 
 const parseId = (id: string): IDData => {
@@ -42,17 +43,18 @@ const parseId = (id: string): IDData => {
       : undefined;
 
   const icon = params.get('icon') || undefined;
+  const color = params.get('color') || undefined;
 
   return Object.assign(
     { level: 'neutral' } as IDData,
-    { level, icon }
+    { level, icon, color }
   );
 };
 
 type NotificationStyle = { background: string, text: string, border: string };
 
 const createStyle = (color: string): NotificationStyle => ({
-  background: color,
+  background: `#${color.replace(/#/g, '')}`,
   text: textFromBackground(color),
   border: lightness(color, 1.25)
 })
@@ -175,11 +177,13 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       ${this.createHeading()}
       <ha-card class="root">
         ${this.notifications.map((notification) => {
-          const { level, icon} = parseId(notification.notification_id);
+          const { level, icon, color } = parseId(notification.notification_id);
+          const { background, text, border } = color ? createStyle(color) : (STYLE[level] || {});
+
           const style = [
-            `--catdad-background: ${STYLE[level].background}`,
-            `--catdad-text: ${STYLE[level].text}`,
-            `--catdad-border: ${STYLE[level].border}`,
+            `--catdad-background: ${background}`,
+            `--catdad-text: ${text}`,
+            `--catdad-border: ${border}`,
           ];
 
           return html`
@@ -271,7 +275,6 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
         direction: var(--direction);
         transition: transform 180ms ease-in-out;
       }
-
       .icon-container ha-state-icon {
         --tile-icon-color: var(--catdad-text);
         --icon-primary-color: var(--catdad-text);
