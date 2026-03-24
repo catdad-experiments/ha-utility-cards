@@ -15,12 +15,14 @@ type Config = {
   type: `custom:${typeof NAME}`;
   heading?: string;
   headingStyle: 'title' | 'subtitle';
+  dismissButton: boolean;
   debug?: boolean;
 };
 
 const getStubConfig = (): Config => ({
   type: `custom:${NAME}`,
-  headingStyle: 'title'
+  headingStyle: 'title',
+  dismissButton: false,
 });
 
 export const card = {
@@ -170,9 +172,17 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
   }
 
   protected render() {
+    const hass = this._hass;
+
+    if (!hass) {
+      return;
+    }
+
     if (this.showCard() === false) {
       return;
     }
+
+    const { dismissButton } = this._config;
 
     return html`
       ${this.createHeading()}
@@ -199,10 +209,22 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
                   ></ha-state-icon>
                 </div>
               `}
-              <div>
+              <div class="grow">
                 ${notification.title ? html`<div class="title">${notification.title}</div>` : ''}
-                <ha-markdown breaks .hass="${this._hass}" .content="${notification.message}" />
+                <ha-markdown breaks .hass="${this._hass}" .content="${notification.message}"></ha-markdown>
               </div>
+
+
+
+              ${dismissButton && html`
+                <ha-control-button @click="${() => {
+                  hass.callService('persistent_notification', 'dismiss', {
+                    notification_id: notification.notification_id
+                  });
+                }}">
+                  <button type="button" class="button">✖</button>
+                </ha-control-button>
+              `}
             </div>
           `;
         })}
@@ -214,6 +236,8 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
     return css`
       ha-card {
         --catdad-border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
+        --catdad-gap: var(--spacing, 12px);
+        --catdad-small-gap: calc(var(--spacing, 12px) / 3);
 
         overflow: hidden;
         background: none;
@@ -225,12 +249,12 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       .root {
         display: flex;
         flex-direction: column;
-        gap: calc(var(--spacing, 12px) / 3);
+        gap: var(--catdad-small-gap);
         background: var(--catdad-background-color, none);
       }
 
       .heading {
-        margin-bottom: var(--spacing, 12px);
+        margin-bottom: var(--catdad-gap);
         display: flex;
         flex-direction: column;
         justify-content: end;
@@ -238,7 +262,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       }
 
       .notification {
-        padding: var(--spacing, 12px);
+        padding: var(--catdad-gap);
         display: flex;
         flex-direction: row;
         height: 100%;
@@ -267,6 +291,10 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
         font-weight: bold;
       }
 
+      .grow {
+        flex: 1;
+      }
+
       .icon-container {
         position: relative;
         flex: none;
@@ -281,6 +309,28 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
         --icon-primary-color: var(--catdad-text);
         padding: 6px;
         user-select: none;
+      }
+
+      ha-control-button {
+        width: fit-content;
+        padding-left: var(--catdad-small-gap);
+      }
+
+      .button {
+        height: var(--feature-height, 42px);
+        margin: 0;
+        padding: var(--control-button-padding);
+        outline: 0;
+        border: none;
+        border-radius: var(--control-button-border-radius);
+        cursor: pointer;
+
+        font-family: var(--ha-font-family-body);
+        font-weight: var(--ha-font-weight-medium);
+        background: 0 0;
+        font-size: inherit;
+        transition: box-shadow 180ms ease-in-out, color 180ms ease-in-out;
+        color: var(--catdad-text);
       }
     `;
   }
@@ -297,6 +347,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
             ],
           }
         }},
+        { name: 'dismissButton', selector: { boolean: {} } },
         { name: 'debug', selector: { boolean: {} } },
       ],
       computeLabel: (schema: { name: keyof Config }) => {
@@ -305,6 +356,8 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
             return 'Heading';
           case 'headingStyle':
             return 'Heading style';
+          case 'dismissButton':
+            return 'Include dismiss button';
           case 'debug':
             return 'Enable debug logging for this card';
           default:
