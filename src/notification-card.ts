@@ -296,7 +296,6 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       }
 
       .icon-container {
-        position: relative;
         flex: none;
         margin-right: 10px;
         margin-inline-start: initial;
@@ -331,6 +330,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
         font-size: inherit;
         transition: box-shadow 180ms ease-in-out, color 180ms ease-in-out;
         color: var(--catdad-text);
+        user-select: none;
       }
     `;
   }
