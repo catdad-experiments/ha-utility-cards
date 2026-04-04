@@ -7,7 +7,7 @@ import { defaults } from 'es-toolkit/compat';
 import { HELPERS } from './utils/card-helpers';
 import { UtilityCard } from './utils/utility-card';
 import { type PersistedNotification, subscribeNotifications } from './utils/notificataion-subscribe';
-import { lightness, textFromBackground } from './utils/color';
+import { ensureColor, lightness, textFromBackground } from './utils/color';
 
 const NAME = 'catdad-notification-card' as const;
 
@@ -189,7 +189,9 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       <ha-card class="root">
         ${this.notifications.map((notification) => {
           const { level, icon, color } = parseId(notification.notification_id);
-          const { background, text, border } = color ? createStyle(color) : (STYLE[level] || {});
+          const { background, text, border } = color
+            ? createStyle(ensureColor(color))
+            : (STYLE[level] || {});
 
           const style = [
             `--catdad-background: ${background}`,

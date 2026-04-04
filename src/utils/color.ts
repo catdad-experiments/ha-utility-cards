@@ -1,9 +1,18 @@
 import convert from 'color-convert';
 
 const hsl = (color: string) => convert.hex.hsl(color.replace(/#/g, ''));
+const name = (color: string) => {
+  try {
+    return convert.keyword.hex(color).toLowerCase();
+  } catch {
+    return null;
+  }
+};
+
+export const ensureColor = (color: string): string => name(color) || color;
 
 export const textFromBackground = (background: string): string => {
-  const [h, s] = hsl(background);
+  const [h, s] = hsl(ensureColor(background));
   const [, , v] = convert.hex.hsv(background.replace(/#/g, ''));
 
   const text = v < 80 ?
