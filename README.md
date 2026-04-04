@@ -73,3 +73,41 @@ You can optionally also use it for manual control:
 When this card is placed on a dashboard, that dashboard becomes the "homepage". If you navigate away and leave the page idle for a while, this card will make sure to navigate back to the homepage. You can combine it with the built-in visibility settings to control when the card has effect.
 
 I use this on my wall panel to make sure it always goes back to the default page after someone walks away.
+
+## Notifications Card
+
+<img width="515" height="279" alt="image" src="https://github.com/user-attachments/assets/08dd64cc-c8bc-4391-b6aa-cd3d93a7010b" />
+
+This card is used to bring [persistent notifications](https://www.home-assistant.io/integrations/persistent_notification/) onto your dashboards. It's inspired by the [home feed card](https://github.com/gadgetchnnel/lovelace-home-feed-card), it focuses more on design and ease of use.
+
+All persisted notifications will be shown on the card, with an optional button to dismiss the notification. However, you can also configure the notifications further when creating them. You have the following properties:
+
+* `level` - The alert level of the notification. All this does really is just change the color. You have the following options:
+  * `success` - green
+  * `error` - red
+  * `warning` - yellow
+  * `info` - blue
+  * `neutral` - the same as not including level at all, so not really sure why I added this option
+* `color` - Any custom color you want to use. This overrides `level` in case you include both for some reason. Use a hex color (`#bada55`) or a named color (`purple`).
+* `icon` - Any icon you can use in other Home Assistant cards, entities, etc. (`mdi:hand-wave`)
+
+These are all defined through the `notification_id` of the persisted notification -- unfortuantely, this is the only value that Home Assistant exposes for persisted notifications, so we have to hack it. All properties are defined as a [query string](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams/URLSearchParams) (sorry for the non-nerds out there, just look at the example and know that I believe in you!). Since `notification_id` is evaluated for uniqueness in order to clear or replace notifications, you also need to make sure that the final value you provide is unique -- again, see the examples.
+
+### Example notification from developer tools
+
+```yaml
+action: notify.persistent_notification
+data:
+  message: Hey, look over here
+  data:
+    notification_id: color=bada55&icon=mdi:hand-wave&id={{ range(100000) | random }}
+```
+
+### Exampe notification from an automation
+
+```yaml
+action: persistent_notification.create
+data:
+  message: Laundry is done at {{ now().strftime("%I:%M %p") }}
+  notification_id: level=info&icon=mdi:washing-machine&id={{ range(100000) | random }}
+```
