@@ -213,9 +213,6 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
                 ${notification.title ? html`<div class="title">${notification.title}</div>` : ''}
                 <ha-markdown breaks .hass="${this._hass}" .content="${notification.message}"></ha-markdown>
               </div>
-
-
-
               ${dismissButton && html`
                 <ha-control-button @click="${() => {
                   hass.callService('persistent_notification', 'dismiss', {
