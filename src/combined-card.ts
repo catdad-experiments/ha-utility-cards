@@ -6,7 +6,7 @@ import { computeColor, sleep } from './utils/types';
 import { UtilityCard } from './utils/utility-card';
 
 import { type Config, type CompleteConfig, editorFactory } from "./combined-card-editor";
-import { opacity, rgbCssVar, textFromBackground } from './utils/color';
+import { applyOpacity, opacity, rgbCssVar, textFromBackground } from './utils/color';
 
 const NAME = 'combined-card';
 const EDITOR_NAME = `${NAME}-editor`;
@@ -185,7 +185,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       ...(this._config?.hideGap ? ['--stack-card-gap: 0px'] : []),
       ...(this._config?.backgroundColor ? (() => {
         const text = textFromBackground(this._config.backgroundColor);
-        const rgb = rgbCssVar(text);
+        const rgb = rgbCssVar(applyOpacity(this._config.backgroundColor, text, 0.3));
         const disabled = opacity(text, 0.3);
 
         return [
@@ -193,7 +193,8 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
           `--ha-card-background: ${this._config.backgroundColor}`,
           `--primary-text-color: ${text}`,
           `--state-inactive-color: ${disabled}`,
-          // mushroom disabled icons
+          // mushroom icons
+          `--mush-rgb-state-entity: ${rgbCssVar(text)}`,
           `--icon-color-disabled: ${disabled}`,
           `--mush-rgb-disabled: ${rgb}`,
           `--rgb-disabled: ${rgb}`,

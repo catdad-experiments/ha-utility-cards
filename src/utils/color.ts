@@ -47,3 +47,14 @@ export const opacity = (color: string, opacity: number): string => {
 }
 
 export const rgbCssVar = (color: string): string => rgb(ensureColor(color)).join(',');
+
+export const applyOpacity = (bottom: string, top: string, topOpacity: number): string => {
+  const [br, bg, bb] = rgb(ensureColor(bottom));
+  const [tr, tg, tb] = rgb(ensureColor(top));
+
+  const r = (br * (1 - topOpacity)) + (tr * topOpacity);
+  const g = (bg * (1 - topOpacity)) + (tg * topOpacity);
+  const b = (bb * (1 - topOpacity)) + (tb * topOpacity);
+
+  return `#${convert.rgb.hex(r, g, b)}`;
+};
