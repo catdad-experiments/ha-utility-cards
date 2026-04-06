@@ -45,3 +45,5 @@ export const lightness = (color: string, by: number): string => {
 export const opacity = (color: string, opacity: number): string => {
   return `rgba(${rgb(color).join(',')},${opacity})`;
 }
+
+export const rgbCssVar = (color: string): string => rgb(ensureColor(color)).join(',');

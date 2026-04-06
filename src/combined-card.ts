@@ -6,7 +6,7 @@ import { computeColor, sleep } from './utils/types';
 import { UtilityCard } from './utils/utility-card';
 
 import { type Config, type CompleteConfig, editorFactory } from "./combined-card-editor";
-import { opacity, textFromBackground } from './utils/color';
+import { opacity, rgbCssVar, textFromBackground } from './utils/color';
 
 const NAME = 'combined-card';
 const EDITOR_NAME = `${NAME}-editor`;
@@ -183,13 +183,22 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       ...(this._config?.hideShadow ? ['--ha-card-box-shadow: none'] : []),
       ...(this._config?.hideRoundedCorners ? ['--ha-card-border-radius: none'] : []),
       ...(this._config?.hideGap ? ['--stack-card-gap: 0px'] : []),
-      ...(this._config?.backgroundColor ? [
-        `--ha-card-background: ${this._config.backgroundColor}`,
-        `--primary-text-color: ${textFromBackground(this._config.backgroundColor)}`,
-        `--state-inactive-color: ${opacity(textFromBackground(this._config.backgroundColor), 0.3)}`,
-        `--icon-color-disabled: ${opacity(textFromBackground(this._config.backgroundColor), 0.3)}`,
-        // `--icon-primary-color: ${opacity(textFromBackground(this._config.backgroundColor), 0.3)}`,
-      ] : []),
+      ...(this._config?.backgroundColor ? (() => {
+        const text = textFromBackground(this._config.backgroundColor);
+        const rgb = rgbCssVar(text);
+        const disabled = opacity(text, 0.3);
+
+        return [
+          // default ha color and backgrounds
+          `--ha-card-background: ${this._config.backgroundColor}`,
+          `--primary-text-color: ${text}`,
+          `--state-inactive-color: ${disabled}`,
+          // mushroom disabled icons
+          `--icon-color-disabled: ${disabled}`,
+          `--mush-rgb-disabled: ${rgb}`,
+          `--rgb-disabled: ${rgb}`,
+        ];
+      })() : []),
     ] : [
       'height: 50px',
       'padding: var(--spacing, 12px)',
