@@ -179,6 +179,12 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
     }
 
     if (this.showCard() === false) {
+      if (this._editMode) {
+        return html`<ha-card class="placeholder">
+          Notification card placeholder
+        </ha-card>`;
+      }
+
       return;
     }
 
@@ -239,10 +245,13 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
         --catdad-small-gap: calc(var(--spacing, 12px) / 3);
 
         overflow: hidden;
-        background: none;
-        border-width: 0;
-        border-style: none;
-        border-radius: 0;
+      }
+
+      .placeholder {
+        padding: var(--spacing, 12px);
+        display: flex;
+        align-items: center;
+        height: 100%;
       }
 
       .root {
@@ -250,6 +259,10 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
         flex-direction: column;
         gap: var(--catdad-small-gap);
         background: var(--catdad-background-color, none);
+
+        border-width: 0;
+        border-style: none;
+        border-radius: 0;
       }
 
       .heading {
