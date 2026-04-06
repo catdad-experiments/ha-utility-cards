@@ -2,10 +2,11 @@ import { css, CSSResultGroup, html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { type HomeAssistant, type LovelaceCard } from 'custom-card-helpers';
 import { HELPERS, loadStackEditor } from './utils/card-helpers';
-import { sleep } from './utils/types';
+import { computeColor, sleep } from './utils/types';
 import { UtilityCard } from './utils/utility-card';
 
 import { type Config, type CompleteConfig, editorFactory } from "./combined-card-editor";
+import { opacity, textFromBackground } from './utils/color';
 
 const NAME = 'combined-card';
 const EDITOR_NAME = `${NAME}-editor`;
@@ -131,6 +132,10 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     }
 
     this._config = Object.assign({}, CombinedCard.getFullConfig(), config);
+
+    const backgroundColor = this._config.backgroundColor ? computeColor(this._config.backgroundColor) : null;
+    this._config.backgroundColor = backgroundColor || undefined;
+
     const that = this;
 
     if (HELPERS.loaded) {
@@ -177,7 +182,14 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       ...(this._config?.hideBorder ? ['--ha-card-border-width: 0px', '--ha-card-border-color: rgba(0, 0, 0, 0)',] : []),
       ...(this._config?.hideShadow ? ['--ha-card-box-shadow: none'] : []),
       ...(this._config?.hideRoundedCorners ? ['--ha-card-border-radius: none'] : []),
-      ...(this._config?.hideGap ? ['--stack-card-gap: 0px'] : [])
+      ...(this._config?.hideGap ? ['--stack-card-gap: 0px'] : []),
+      ...(this._config?.backgroundColor ? [
+        `--ha-card-background: ${this._config.backgroundColor}`,
+        `--primary-text-color: ${textFromBackground(this._config.backgroundColor)}`,
+        `--state-inactive-color: ${opacity(textFromBackground(this._config.backgroundColor), 0.3)}`,
+        `--icon-color-disabled: ${opacity(textFromBackground(this._config.backgroundColor), 0.3)}`,
+        // `--icon-primary-color: ${opacity(textFromBackground(this._config.backgroundColor), 0.3)}`,
+      ] : []),
     ] : [
       'height: 50px',
       'padding: var(--spacing, 12px)',
@@ -248,6 +260,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       hideShadow: true,
       hideRoundedCorners: true,
       hideGap: false,
+      backgroundColor: '',
       ...CombinedCard.getStubConfig(),
     };
   }

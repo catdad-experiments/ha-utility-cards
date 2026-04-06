@@ -1,6 +1,7 @@
 import convert from 'color-convert';
 
 const hsl = (color: string) => convert.hex.hsl(color.replace(/#/g, ''));
+const rgb = (color: string) => convert.hex.rgb(color.replace(/#/g, ''));
 const name = (color: string) => {
   try {
     return convert.keyword.hex(color).toLowerCase();
@@ -9,17 +10,28 @@ const name = (color: string) => {
   }
 };
 
+const isLight = (r: number, g: number, b: number): boolean => {
+  // HSP (Highly Sensitive Poo) equation
+  const hsp = Math.sqrt(
+    0.299 * (r * r) +
+    0.587 * (g * g) +
+    0.114 * (b * b)
+  );
+
+  return hsp > 127.5;
+}
+
 export const ensureColor = (color: string): string => name(color) || color;
 
 export const textFromBackground = (background: string): string => {
   const [h, s] = hsl(ensureColor(background));
-  const [, , v] = convert.hex.hsv(background.replace(/#/g, ''));
+  const [r, g, b] = rgb(ensureColor(background));
 
-  const text = v < 80 ?
-    // color is dark, use light text
-    convert.hsl.hex([h, s, 85]) :
+  const text = isLight(r, g, b) ?
     // color is light, use dark text
-    convert.hsl.hex([h, s, 20]);
+    convert.hsl.hex([h, s, 20]) :
+    // color is dark, use light text
+    convert.hsl.hex([h, s, 85]);
 
   return `#${text}`;
 };
@@ -29,3 +41,7 @@ export const lightness = (color: string, by: number): string => {
 
   return `#${convert.hsl.hex([h, s, l * by])}`;
 };
+
+export const opacity = (color: string, opacity: number): string => {
+  return `rgba(${rgb(color).join(',')},${opacity})`;
+}
