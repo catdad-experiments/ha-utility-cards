@@ -4,6 +4,7 @@ import { card as autoReloadCard } from './auto-reload-card';
 import { card as backButtonCard } from './back-button-card';
 import { card as autoLightDarkModeCard } from './auto-light-dark-mode-card';
 import { card as homepageCard } from './homepage-card';
+import { card as notificationCard } from './notification-card';
 
 // Note: this is what adds the card to the UI card selector
 (window as any).customCards = (window as any).customCards || [];
@@ -14,4 +15,5 @@ import { card as homepageCard } from './homepage-card';
   backButtonCard,
   autoLightDarkModeCard,
   homepageCard,
+  notificationCard,
 );
