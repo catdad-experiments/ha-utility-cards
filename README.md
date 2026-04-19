@@ -16,6 +16,7 @@ In HACS, add the repo `https://github.com/catdad-experiments/ha-utility-cards` a
 * [`catdad-back-button-card`](#back-button-card)
 * [`catdad-auto-light-dark-mode-card`](#automatic-lightdark-mode-card)
 * [`catdad-homepage-card`](#homepage-card)
+* [`catdad-notification-card`](#notifications-card)
 
 ## Combined Card
 
