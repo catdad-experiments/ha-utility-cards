@@ -266,7 +266,7 @@ class NotificationCard extends UtilityCard implements LovelaceCard {
       }
 
       .heading {
-        margin-bottom: var(--catdad-gap);
+        margin-bottom: calc(var(--row-gap) / 2);
         display: flex;
         flex-direction: column;
         justify-content: end;
