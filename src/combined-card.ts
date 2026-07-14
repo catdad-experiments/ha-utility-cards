@@ -182,7 +182,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       ...(this._config?.hideBorder ? ['--ha-card-border-width: 0px', '--ha-card-border-color: rgba(0, 0, 0, 0)',] : []),
       ...(this._config?.hideShadow ? ['--ha-card-box-shadow: none'] : []),
       ...(this._config?.hideRoundedCorners ? ['--ha-card-border-radius: none'] : []),
-      ...(this._config?.hideGap ? ['--stack-card-gap: 0px'] : []),
+      ...(this._config?.hideGap ? ['--stack-card-gap: 0px', '--horizontal-stack-card-gap: 0px', '--vertical-stack-card-gap: 0px'] : []),
       ...(this._config?.backgroundColor ? (() => {
         const text = textFromBackground(this._config.backgroundColor);
         const rgb = rgbCssVar(applyOpacity(this._config.backgroundColor, text, 0.3));
