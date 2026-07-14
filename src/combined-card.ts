@@ -198,6 +198,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
           `--icon-color-disabled: ${disabled}`,
           `--mush-rgb-disabled: ${rgb}`,
           `--rgb-disabled: ${rgb}`,
+          `background: var(--ha-card-background)`,
         ];
       })() : []),
     ] : [
