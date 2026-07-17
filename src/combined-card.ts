@@ -7,6 +7,7 @@ import { UtilityCard } from './utils/utility-card';
 
 import { type Config, type CompleteConfig, editorFactory } from "./combined-card-editor";
 import { applyOpacity, opacity, rgbCssVar, textFromBackground } from './utils/color';
+import { type Connection, type UnsubscribeFunc, subscribeRenderTemplate } from './utils/template-subscriber';
 
 const NAME = 'combined-card';
 const EDITOR_NAME = `${NAME}-editor`;
@@ -23,13 +24,16 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
   @state() private _config?: Config;
   @state() private _helpers?;
   @state() private _forceRender: string = getRandomId();
+  @state() private renderedBgColor?: string;
 
   protected readonly name: string = NAME;
 
+  private mounted = false;
   private _card?: LovelaceCard;
   private _hass?: HomeAssistant;
   private _editMode: boolean = false;
   private _timer?: number;
+  private _bgColorTemplateUnsubscribe?: UnsubscribeFunc;
 
   set hass(hass: HomeAssistant) {
     this._hass = hass;
@@ -133,9 +137,6 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
 
     this._config = Object.assign({}, CombinedCard.getFullConfig(), config);
 
-    const backgroundColor = this._config.backgroundColor ? computeColor(this._config.backgroundColor) : null;
-    this._config.backgroundColor = backgroundColor || undefined;
-
     const that = this;
 
     if (HELPERS.loaded) {
@@ -183,14 +184,14 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       ...(this._config?.hideShadow ? ['--ha-card-box-shadow: none'] : []),
       ...(this._config?.hideRoundedCorners ? ['--ha-card-border-radius: none'] : []),
       ...(this._config?.hideGap ? ['--stack-card-gap: 0px', '--horizontal-stack-card-gap: 0px', '--vertical-stack-card-gap: 0px'] : []),
-      ...(this._config?.backgroundColor ? (() => {
-        const text = textFromBackground(this._config.backgroundColor);
-        const rgb = rgbCssVar(applyOpacity(this._config.backgroundColor, text, 0.3));
+      ...(this.renderedBgColor ? (() => {
+        const text = textFromBackground(this.renderedBgColor);
+        const rgb = rgbCssVar(applyOpacity(this.renderedBgColor, text, 0.3));
         const disabled = opacity(text, 0.3);
 
         return [
           // default ha color and backgrounds
-          `--ha-card-background: ${this._config.backgroundColor}`,
+          `--ha-card-background: ${this.renderedBgColor}`,
           `--primary-text-color: ${text}`,
           `--state-inactive-color: ${disabled}`,
           // mushroom icons
@@ -235,6 +236,65 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     element.editMode = this._editMode;
 
     return element;
+  }
+
+  private disconnect(): void {
+    if (this._bgColorTemplateUnsubscribe) {
+      this._bgColorTemplateUnsubscribe();
+      this._bgColorTemplateUnsubscribe = undefined;
+      this.renderedBgColor = undefined;
+    }
+  }
+
+  private async connect(): Promise<void> {
+    const connection = this._hass?.connection as any as Connection | undefined;
+    const bgTemplate = this._config?.backgroundColor;
+
+    if (!connection || !bgTemplate) {
+      return;
+    }
+
+    this.disconnect();
+
+    // most of the time, this won't be a template, so attempt
+    // to use it as a normal color first
+    this.renderedBgColor = computeColor(bgTemplate) || undefined;
+
+    if (this.renderedBgColor) {
+      return;
+    }
+
+    try {
+      this._bgColorTemplateUnsubscribe = await subscribeRenderTemplate(connection, result => {
+        this.logger.debug(`background color template rendered:`, result, `continue: ${this.mounted}`)
+
+        const colorString = result.result?.trim?.();
+
+        if (colorString) {
+          this.renderedBgColor = computeColor(colorString) || undefined;
+        }
+
+        this.logger.debug(`rendered background template:`, {
+          result: result.result,
+          colorString,
+          renderedBgColor: this.renderedBgColor
+        });
+      }, { template: bgTemplate });
+    } catch (e) {
+      this.logger.error(`failed to render background color template\n${bgTemplate}\n\n`, e);
+    }
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.mounted = true;
+    this.connect();
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.disconnect();
+    this.mounted = false;
   }
 
   static get styles(): CSSResultGroup {
