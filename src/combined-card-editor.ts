@@ -17,6 +17,7 @@ type CustomConfig = {
   hideGap?: boolean;
   themeColor?: string;
   cardBackgroundColor?: string;
+  cardBackgroundOpacity?: number;
   debug?: boolean;
 };
 
@@ -56,6 +57,10 @@ const schema = [
         include_state: false,
       },
     },
+  },
+  {
+    name: 'cardBackgroundOpacity',
+    selector: { number: { min: 0, max: 100 }},
   },
   { name: "debug", selector: { boolean: {} } },
 ] as const;
@@ -156,11 +161,22 @@ export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: 
                     .with({ name: 'hideGap' }, () => 'Hide gap')
                     .with({ name: 'themeColor' }, () => 'Experimental: Full theme background color')
                     .with({ name: 'cardBackgroundColor' }, () => 'Experimental: Section-like card background')
+                    .with({ name: 'cardBackgroundOpacity' }, () => 'Card background opacity')
                     .with({ name: 'debug' }, () => 'Debug logging')
                     .otherwise(({ name }) => name);
                 }}
                 @value-changed=${(ev) => {
-                  const { stackMode, hideBorder, hideShadow, hideRoundedCorners, hideGap, themeColor, cardBackgroundColor, debug } = (ev?.detail?.value || {}) as Config;
+                  const {
+                    stackMode,
+                    hideBorder,
+                    hideShadow,
+                    hideRoundedCorners,
+                    hideGap,
+                    themeColor,
+                    cardBackgroundColor,
+                    cardBackgroundOpacity,
+                    debug
+                  } = (ev?.detail?.value || {}) as Config;
 
                   this.configChanged({
                     ...this._config,
@@ -171,6 +187,7 @@ export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: 
                     hideGap,
                     themeColor,
                     cardBackgroundColor,
+                    cardBackgroundOpacity,
                     debug,
                   });
                 }}

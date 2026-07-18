@@ -1,6 +1,7 @@
 import { css, CSSResultGroup, html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { type HomeAssistant, type LovelaceCard } from 'custom-card-helpers';
+import { clamp } from 'es-toolkit';
 import { HELPERS, loadStackEditor } from './utils/card-helpers';
 import { sleep } from './utils/types';
 import { UtilityCard } from './utils/utility-card';
@@ -218,8 +219,13 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
         ];
       })() : []),
       ...(this.renderedCardBackgroundColor ? (() => {
+        const color = opacity(
+          this.renderedCardBackgroundColor,
+          clamp(Number(this._config?.cardBackgroundOpacity) || 0, 0, 100) / 100
+        );
+
         return [
-          `background: color-mix(in srgb, ${this.renderedCardBackgroundColor}, transparent 50%)`,
+          `background: ${color}`,
           // these are hard-coded in sections rather than using a theme variable
           'padding: 8px',
           'border-radius: 16px'
@@ -233,7 +239,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     ];
 
     return html`
-      <ha-card>
+      <ha-card style="${this.renderedCardBackgroundColor ? 'border: 0px' : ''}">
         <div render-id="${this._forceRender}" style="${styles.join(';')}">${element}</div>
       </ha-card>
     `;
@@ -364,6 +370,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       hideGap: false,
       themeColor: '',
       cardBackgroundColor: '',
+      cardBackgroundOpacity: 50,
       debug: false,
       ...CombinedCard.getStubConfig(),
     };
