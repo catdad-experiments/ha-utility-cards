@@ -16,6 +16,7 @@ type CustomConfig = {
   hideRoundedCorners?: boolean;
   hideGap?: boolean;
   backgroundColor?: string;
+  debug?: boolean;
 };
 
 export type Config = LovelaceCardConfig & CustomConfig;
@@ -47,6 +48,7 @@ const schema = [
       },
     },
   },
+  { name: "debug", selector: { boolean: {} } },
 ] as const;
 
 export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: CompleteConfig) => {
@@ -144,10 +146,11 @@ export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: 
                     .with({ name: 'hideRoundedCorners' }, () => 'Hide rounded corners')
                     .with({ name: 'hideGap' }, () => 'Hide gap')
                     .with({ name: 'backgroundColor' }, () => 'Experimental: Background color')
+                    .with({ name: 'debug' }, () => 'Debug logging')
                     .otherwise(({ name }) => name);
                 }}
                 @value-changed=${(ev) => {
-                  const { stackMode, hideBorder, hideShadow, hideRoundedCorners, hideGap, backgroundColor } = (ev?.detail?.value || {}) as Config;
+                  const { stackMode, hideBorder, hideShadow, hideRoundedCorners, hideGap, backgroundColor, debug } = (ev?.detail?.value || {}) as Config;
 
                   this.configChanged({
                     ...this._config,
@@ -157,6 +160,7 @@ export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: 
                     hideRoundedCorners,
                     hideGap,
                     backgroundColor,
+                    debug,
                   });
                 }}
               ></ha-form>

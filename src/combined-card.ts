@@ -8,6 +8,7 @@ import { UtilityCard } from './utils/utility-card';
 import { type Config, type CompleteConfig, editorFactory } from "./combined-card-editor";
 import { applyOpacity, opacity, rgbCssVar, textFromBackground } from './utils/color';
 import { type Connection, type UnsubscribeFunc, subscribeRenderTemplate } from './utils/template-subscriber';
+import { type LoggerOptions } from './utils/log';
 
 const NAME = 'combined-card';
 const EDITOR_NAME = `${NAME}-editor`;
@@ -34,6 +35,13 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
   private _editMode: boolean = false;
   private _timer?: number;
   private _bgColorTemplateUnsubscribe?: UnsubscribeFunc;
+
+  protected get loggerOptions(): LoggerOptions {
+    return {
+      ...super.loggerOptions,
+      level: this._config?.debug ? 'debug' : 'info'
+    };
+  }
 
   set hass(hass: HomeAssistant) {
     this._hass = hass;
@@ -261,6 +269,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     this.renderedBgColor = computeColor(bgTemplate) || undefined;
 
     if (this.renderedBgColor) {
+      this.logger.debug(`background color as simple color:`, this.renderedBgColor);
       return;
     }
 
@@ -332,6 +341,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       hideRoundedCorners: true,
       hideGap: false,
       backgroundColor: '',
+      debug: false,
       ...CombinedCard.getStubConfig(),
     };
   }
