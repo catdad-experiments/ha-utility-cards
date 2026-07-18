@@ -2,12 +2,12 @@ import { css, CSSResultGroup, html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { type HomeAssistant, type LovelaceCard } from 'custom-card-helpers';
 import { HELPERS, loadStackEditor } from './utils/card-helpers';
-import { computeColor, sleep } from './utils/types';
+import { sleep } from './utils/types';
 import { UtilityCard } from './utils/utility-card';
 
 import { type Config, type CompleteConfig, editorFactory } from "./combined-card-editor";
 import { applyOpacity, opacity, rgbCssVar, textFromBackground } from './utils/color';
-import { type Connection, type UnsubscribeFunc, subscribeRenderTemplate } from './utils/template-subscriber';
+import { type Connection, type UnsubscribeFunc } from './utils/template-subscriber';
 import { type LoggerOptions } from './utils/log';
 import { renderColorTemplate } from './utils/color-template';
 
@@ -26,7 +26,6 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
   @state() private _config?: Config;
   @state() private _helpers?;
   @state() private _forceRender: string = getRandomId();
-  @state() private renderedThemeColor?: string;
 
   protected readonly name: string = NAME;
 
@@ -35,7 +34,12 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
   private _hass?: HomeAssistant;
   private _editMode: boolean = false;
   private _timer?: number;
-  private _bgColorTemplateUnsubscribe?: UnsubscribeFunc;
+
+  @state() private renderedThemeColor?: string;
+  private _themeColorUnsubscribe?: UnsubscribeFunc;
+
+  @state() private renderedCardBackgroundColor?: string;
+  private _backgroundColorUnsubscribe?: UnsubscribeFunc;
 
   protected get loggerOptions(): LoggerOptions {
     return {
@@ -188,6 +192,8 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       );
     }
 
+    console.log('bg color', this.renderedCardBackgroundColor);
+
     const styles = loaded ? [
       ...(this._config?.hideBorder ? ['--ha-card-border-width: 0px', '--ha-card-border-color: rgba(0, 0, 0, 0)',] : []),
       ...(this._config?.hideShadow ? ['--ha-card-box-shadow: none'] : []),
@@ -209,6 +215,14 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
           `--mush-rgb-disabled: ${rgb}`,
           `--rgb-disabled: ${rgb}`,
           `background: var(--ha-card-background)`,
+        ];
+      })() : []),
+      ...(this.renderedCardBackgroundColor ? (() => {
+        return [
+          `background: color-mix(in srgb, ${this.renderedCardBackgroundColor}, transparent 50%)`,
+          // these are hard-coded in sections rather than using a theme variable
+          'padding: 8px',
+          'border-radius: 16px'
         ];
       })() : []),
     ] : [
@@ -248,11 +262,13 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
   }
 
   private disconnect(): void {
-    if (this._bgColorTemplateUnsubscribe) {
-      this._bgColorTemplateUnsubscribe();
-      this._bgColorTemplateUnsubscribe = undefined;
-      this.renderedThemeColor = undefined;
-    }
+    this._themeColorUnsubscribe && this._themeColorUnsubscribe();
+    this._backgroundColorUnsubscribe && this._backgroundColorUnsubscribe();
+
+    this._themeColorUnsubscribe = undefined;
+    this._backgroundColorUnsubscribe = undefined;
+    this.renderedThemeColor = undefined;
+    this.renderedCardBackgroundColor = undefined;
   }
 
   private async connect(): Promise<void> {
@@ -264,21 +280,40 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
 
     this.disconnect();
 
-    const themeTemplate = this._config?.themeColor;
 
-    this._bgColorTemplateUnsubscribe = themeTemplate
-      ? await renderColorTemplate(
-        { connection, logger: this.logger },
-        themeTemplate,
-        color => {
-          if (!this.mounted) {
-            return;
-          }
 
-          this.renderedThemeColor = color;
-        }
-      )
-      : undefined;
+    await Promise.all([
+      Promise.resolve().then(async () => {
+        this._themeColorUnsubscribe = this._config?.themeColor
+          ? await renderColorTemplate(
+            { connection, logger: this.logger },
+            this._config.themeColor,
+            color => {
+              if (!this.mounted) {
+                return;
+              }
+
+              this.renderedThemeColor = color;
+            }
+          )
+          : undefined;
+      }),
+      Promise.resolve().then(async () => {
+        this._backgroundColorUnsubscribe = this._config?.cardBackgroundColor
+          ? await renderColorTemplate(
+            { connection, logger: this.logger },
+            this._config.cardBackgroundColor,
+            color => {
+              if (!this.mounted) {
+                return;
+              }
+
+              this.renderedCardBackgroundColor = color;
+            }
+          )
+          : undefined;
+      })
+    ])
   }
 
   connectedCallback(): void {
