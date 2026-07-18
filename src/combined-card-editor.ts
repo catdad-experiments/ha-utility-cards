@@ -15,7 +15,8 @@ type CustomConfig = {
   hideShadow?: boolean;
   hideRoundedCorners?: boolean;
   hideGap?: boolean;
-  backgroundColor?: string;
+  themeColor?: string;
+  cardBackgroundColor?: string;
   debug?: boolean;
 };
 
@@ -41,7 +42,15 @@ const schema = [
   { name: "hideRoundedCorners", selector: { boolean: {} } },
   { name: "hideGap", selector: { boolean: {} } },
   {
-    name: 'backgroundColor',
+    name: 'themeColor',
+    selector: {
+      ui_color: {
+        include_state: false,
+      },
+    },
+  },
+  {
+    name: 'cardBackgroundColor',
     selector: {
       ui_color: {
         include_state: false,
@@ -145,12 +154,13 @@ export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: 
                     .with({ name: 'hideShadow' }, () => 'Hide shadow')
                     .with({ name: 'hideRoundedCorners' }, () => 'Hide rounded corners')
                     .with({ name: 'hideGap' }, () => 'Hide gap')
-                    .with({ name: 'backgroundColor' }, () => 'Experimental: Background color')
+                    .with({ name: 'themeColor' }, () => 'Experimental: Full theme background color')
+                    .with({ name: 'cardBackgroundColor' }, () => 'Experimental: Section-like card background')
                     .with({ name: 'debug' }, () => 'Debug logging')
                     .otherwise(({ name }) => name);
                 }}
                 @value-changed=${(ev) => {
-                  const { stackMode, hideBorder, hideShadow, hideRoundedCorners, hideGap, backgroundColor, debug } = (ev?.detail?.value || {}) as Config;
+                  const { stackMode, hideBorder, hideShadow, hideRoundedCorners, hideGap, themeColor, cardBackgroundColor, debug } = (ev?.detail?.value || {}) as Config;
 
                   this.configChanged({
                     ...this._config,
@@ -159,7 +169,8 @@ export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: 
                     hideShadow,
                     hideRoundedCorners,
                     hideGap,
-                    backgroundColor,
+                    themeColor,
+                    cardBackgroundColor,
                     debug,
                   });
                 }}

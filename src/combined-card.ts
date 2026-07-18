@@ -9,6 +9,7 @@ import { type Config, type CompleteConfig, editorFactory } from "./combined-card
 import { applyOpacity, opacity, rgbCssVar, textFromBackground } from './utils/color';
 import { type Connection, type UnsubscribeFunc, subscribeRenderTemplate } from './utils/template-subscriber';
 import { type LoggerOptions } from './utils/log';
+import { renderColorTemplate } from './utils/color-template';
 
 const NAME = 'combined-card';
 const EDITOR_NAME = `${NAME}-editor`;
@@ -25,7 +26,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
   @state() private _config?: Config;
   @state() private _helpers?;
   @state() private _forceRender: string = getRandomId();
-  @state() private renderedBgColor?: string;
+  @state() private renderedThemeColor?: string;
 
   protected readonly name: string = NAME;
 
@@ -192,14 +193,14 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       ...(this._config?.hideShadow ? ['--ha-card-box-shadow: none'] : []),
       ...(this._config?.hideRoundedCorners ? ['--ha-card-border-radius: none'] : []),
       ...(this._config?.hideGap ? ['--stack-card-gap: 0px', '--horizontal-stack-card-gap: 0px', '--vertical-stack-card-gap: 0px'] : []),
-      ...(this.renderedBgColor ? (() => {
-        const text = textFromBackground(this.renderedBgColor);
-        const rgb = rgbCssVar(applyOpacity(this.renderedBgColor, text, 0.3));
+      ...(this.renderedThemeColor ? (() => {
+        const text = textFromBackground(this.renderedThemeColor);
+        const rgb = rgbCssVar(applyOpacity(this.renderedThemeColor, text, 0.3));
         const disabled = opacity(text, 0.3);
 
         return [
           // default ha color and backgrounds
-          `--ha-card-background: ${this.renderedBgColor}`,
+          `--ha-card-background: ${this.renderedThemeColor}`,
           `--primary-text-color: ${text}`,
           `--state-inactive-color: ${disabled}`,
           // mushroom icons
@@ -250,48 +251,34 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     if (this._bgColorTemplateUnsubscribe) {
       this._bgColorTemplateUnsubscribe();
       this._bgColorTemplateUnsubscribe = undefined;
-      this.renderedBgColor = undefined;
+      this.renderedThemeColor = undefined;
     }
   }
 
   private async connect(): Promise<void> {
     const connection = this._hass?.connection as any as Connection | undefined;
-    const bgTemplate = this._config?.backgroundColor;
 
-    if (!connection || !bgTemplate) {
+    if (!connection) {
       return;
     }
 
     this.disconnect();
 
-    // most of the time, this won't be a template, so attempt
-    // to use it as a normal color first
-    this.renderedBgColor = computeColor(bgTemplate) || undefined;
+    const themeTemplate = this._config?.themeColor;
 
-    if (this.renderedBgColor) {
-      this.logger.debug(`background color as simple color:`, this.renderedBgColor);
-      return;
-    }
+    this._bgColorTemplateUnsubscribe = themeTemplate
+      ? await renderColorTemplate(
+        { connection, logger: this.logger },
+        themeTemplate,
+        color => {
+          if (!this.mounted) {
+            return;
+          }
 
-    try {
-      this._bgColorTemplateUnsubscribe = await subscribeRenderTemplate(connection, result => {
-        this.logger.debug(`background color template rendered:`, result, `continue: ${this.mounted}`)
-
-        const colorString = result.result?.trim?.();
-
-        if (colorString) {
-          this.renderedBgColor = computeColor(colorString) || undefined;
+          this.renderedThemeColor = color;
         }
-
-        this.logger.debug(`rendered background template:`, {
-          result: result.result,
-          colorString,
-          renderedBgColor: this.renderedBgColor
-        });
-      }, { template: bgTemplate });
-    } catch (e) {
-      this.logger.error(`failed to render background color template\n${bgTemplate}\n\n`, e);
-    }
+      )
+      : undefined;
   }
 
   connectedCallback(): void {
@@ -340,7 +327,8 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       hideShadow: true,
       hideRoundedCorners: true,
       hideGap: false,
-      backgroundColor: '',
+      themeColor: '',
+      cardBackgroundColor: '',
       debug: false,
       ...CombinedCard.getStubConfig(),
     };
