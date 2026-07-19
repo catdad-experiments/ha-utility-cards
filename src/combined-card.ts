@@ -286,8 +286,6 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
 
     this.disconnect();
 
-
-
     await Promise.all([
       Promise.resolve().then(async () => {
         this._themeColorUnsubscribe = this._config?.themeColor
