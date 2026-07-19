@@ -43,24 +43,47 @@ const schema = [
   { name: "hideRoundedCorners", selector: { boolean: {} } },
   { name: "hideGap", selector: { boolean: {} } },
   {
-    name: 'themeColor',
-    selector: {
-      ui_color: {
-        include_state: false,
+    type: 'expandable', name: '', flatten: true, expanded: true,
+    icon: 'mdi:test-tube',
+    title: html`<div>
+      <p>Experimental: card theme</p>
+      <p style="font-size: 0.85rem; font-weight: normal; max-width: 65ch; line-height: 1.2;">
+        Set a background color for the entire combined card and all cards inside it.
+        Font and icons colors will adjust automatically to look good with the selected color.
+      </p>
+    </div>`,
+    schema: [{
+      name: 'themeColor',
+      selector: {
+        ui_color: {
+          include_state: false,
+        },
       },
-    },
+    }],
   },
   {
-    name: 'cardBackgroundColor',
-    selector: {
-      ui_color: {
-        include_state: false,
+    type: 'expandable', name: '', flatten: true, expanded: true,
+    icon: 'mdi:test-tube',
+    title: html`<div>
+      <p>Experimental: card background</p>
+      <p style="font-size: 0.85rem; font-weight: normal; max-width: 65ch; line-height: 1.2;">
+        Similar to section colors. Works best if you do not hide borders,
+        gaps, etc. so that cards appear to render as full cards, showing the
+        background behind them.
+      </p>
+    </div>`,
+    schema: [{
+      name: 'cardBackgroundColor',
+      selector: {
+        ui_color: {
+          include_state: false,
+        },
       },
     },
-  },
-  {
-    name: 'cardBackgroundOpacity',
-    selector: { number: { min: 0, max: 100 }},
+    {
+      name: 'cardBackgroundOpacity',
+      selector: { number: { min: 0, max: 100 }},
+    }],
   },
   { name: "debug", selector: { boolean: {} } },
 ] as const;
@@ -152,15 +175,15 @@ export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: 
                   ...this._config
                 }}
                 .schema=${schema}
-                .computeLabel=${(element: (typeof schema)[number]) => {
+                .computeLabel=${(element: { name: keyof CustomConfig }) => {
                   return match(element)
                     .with({ name: 'stackMode' }, () => 'Stack mode')
                     .with({ name: 'hideBorder' }, () => 'Hide border')
                     .with({ name: 'hideShadow' }, () => 'Hide shadow')
                     .with({ name: 'hideRoundedCorners' }, () => 'Hide rounded corners')
                     .with({ name: 'hideGap' }, () => 'Hide gap')
-                    .with({ name: 'themeColor' }, () => 'Experimental: Full theme background color')
-                    .with({ name: 'cardBackgroundColor' }, () => 'Experimental: Section-like card background')
+                    .with({ name: 'themeColor' }, () => 'Full theme background color')
+                    .with({ name: 'cardBackgroundColor' }, () => 'Card background color')
                     .with({ name: 'cardBackgroundOpacity' }, () => 'Card background opacity')
                     .with({ name: 'debug' }, () => 'Debug logging')
                     .otherwise(({ name }) => name);
