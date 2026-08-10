@@ -22,5 +22,27 @@ export const resolveColor = (value: string, defaultValue?: string): string => {
   return isHexString(value) ? value : `var(--${value}-color, ${defaultValue || value})`;
 };
 
+export const computeColor = (value: string, defaultValue?: string): string | null => {
+  if (isHexString(value)) {
+    return value;
+  }
+
+  if (isHexString(`#${value}`)) {
+    return `#${value}`;
+  }
+
+  const computed = getComputedStyle(document.documentElement).getPropertyValue(`--${value}-color`);
+
+  if (computed && isHexString(computed)) {
+    return computed;
+  }
+
+  if (defaultValue) {
+    return computeColor(defaultValue);
+  }
+
+  return null;
+};
+
 export const second = 1000;
 export const minute = second * 60;

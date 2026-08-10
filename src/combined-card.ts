@@ -1,11 +1,16 @@
 import { css, CSSResultGroup, html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { type HomeAssistant, type LovelaceCard } from 'custom-card-helpers';
+import { clamp } from 'es-toolkit';
 import { HELPERS, loadStackEditor } from './utils/card-helpers';
 import { sleep } from './utils/types';
 import { UtilityCard } from './utils/utility-card';
 
 import { type Config, type CompleteConfig, editorFactory } from "./combined-card-editor";
+import { applyOpacity, opacity, rgbCssVar, textFromBackground } from './utils/color';
+import { type Connection, type UnsubscribeFunc } from './utils/template-subscriber';
+import { type LoggerOptions } from './utils/log';
+import { renderColorTemplate } from './utils/color-template';
 
 const NAME = 'combined-card';
 const EDITOR_NAME = `${NAME}-editor`;
@@ -25,10 +30,24 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
 
   protected readonly name: string = NAME;
 
+  private mounted = false;
   private _card?: LovelaceCard;
   private _hass?: HomeAssistant;
   private _editMode: boolean = false;
   private _timer?: number;
+
+  @state() private renderedThemeColor?: string;
+  private _themeColorUnsubscribe?: UnsubscribeFunc;
+
+  @state() private renderedCardBackgroundColor?: string;
+  private _backgroundColorUnsubscribe?: UnsubscribeFunc;
+
+  protected get loggerOptions(): LoggerOptions {
+    return {
+      ...super.loggerOptions,
+      level: this._config?.debug ? 'debug' : 'info'
+    };
+  }
 
   set hass(hass: HomeAssistant) {
     this._hass = hass;
@@ -131,6 +150,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     }
 
     this._config = Object.assign({}, CombinedCard.getFullConfig(), config);
+
     const that = this;
 
     if (HELPERS.loaded) {
@@ -173,11 +193,44 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       );
     }
 
+    console.log('bg color', this.renderedCardBackgroundColor);
+
     const styles = loaded ? [
       ...(this._config?.hideBorder ? ['--ha-card-border-width: 0px', '--ha-card-border-color: rgba(0, 0, 0, 0)',] : []),
       ...(this._config?.hideShadow ? ['--ha-card-box-shadow: none'] : []),
       ...(this._config?.hideRoundedCorners ? ['--ha-card-border-radius: none'] : []),
       ...(this._config?.hideGap ? ['--stack-card-gap: 0px', '--horizontal-stack-card-gap: 0px', '--vertical-stack-card-gap: 0px'] : []),
+      ...(this.renderedThemeColor ? (() => {
+        const text = textFromBackground(this.renderedThemeColor);
+        const rgb = rgbCssVar(applyOpacity(this.renderedThemeColor, text, 0.3));
+        const disabled = opacity(text, 0.3);
+
+        return [
+          // default ha color and backgrounds
+          `--ha-card-background: ${this.renderedThemeColor}`,
+          `--primary-text-color: ${text}`,
+          `--state-inactive-color: ${disabled}`,
+          // mushroom icons
+          `--mush-rgb-state-entity: ${rgbCssVar(text)}`,
+          `--icon-color-disabled: ${disabled}`,
+          `--mush-rgb-disabled: ${rgb}`,
+          `--rgb-disabled: ${rgb}`,
+          `background: var(--ha-card-background)`,
+        ];
+      })() : []),
+      ...(this.renderedCardBackgroundColor ? (() => {
+        const color = opacity(
+          this.renderedCardBackgroundColor,
+          clamp(Number(this._config?.cardBackgroundOpacity) || 0, 0, 100) / 100
+        );
+
+        return [
+          `background: ${color}`,
+          // these are hard-coded in sections rather than using a theme variable
+          'padding: 8px',
+          'border-radius: 16px'
+        ];
+      })() : []),
     ] : [
       'height: 50px',
       'padding: var(--spacing, 12px)',
@@ -186,7 +239,7 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     ];
 
     return html`
-      <ha-card>
+      <ha-card style="${this.renderedCardBackgroundColor ? 'border: 0px' : ''}">
         <div render-id="${this._forceRender}" style="${styles.join(';')}">${element}</div>
       </ha-card>
     `;
@@ -212,6 +265,71 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
     element.editMode = this._editMode;
 
     return element;
+  }
+
+  private disconnect(): void {
+    this._themeColorUnsubscribe && this._themeColorUnsubscribe();
+    this._backgroundColorUnsubscribe && this._backgroundColorUnsubscribe();
+
+    this._themeColorUnsubscribe = undefined;
+    this._backgroundColorUnsubscribe = undefined;
+    this.renderedThemeColor = undefined;
+    this.renderedCardBackgroundColor = undefined;
+  }
+
+  private async connect(): Promise<void> {
+    const connection = this._hass?.connection as any as Connection | undefined;
+
+    if (!connection) {
+      return;
+    }
+
+    this.disconnect();
+
+    await Promise.all([
+      Promise.resolve().then(async () => {
+        this._themeColorUnsubscribe = this._config?.themeColor
+          ? await renderColorTemplate(
+            { connection, logger: this.logger },
+            this._config.themeColor,
+            color => {
+              if (!this.mounted) {
+                return;
+              }
+
+              this.renderedThemeColor = color;
+            }
+          )
+          : undefined;
+      }),
+      Promise.resolve().then(async () => {
+        this._backgroundColorUnsubscribe = this._config?.cardBackgroundColor
+          ? await renderColorTemplate(
+            { connection, logger: this.logger },
+            this._config.cardBackgroundColor,
+            color => {
+              if (!this.mounted) {
+                return;
+              }
+
+              this.renderedCardBackgroundColor = color;
+            }
+          )
+          : undefined;
+      })
+    ])
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.mounted = true;
+    this.connect();
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.disconnect();
+    this.mounted = false;
   }
 
   static get styles(): CSSResultGroup {
@@ -248,6 +366,10 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       hideShadow: true,
       hideRoundedCorners: true,
       hideGap: false,
+      themeColor: '',
+      cardBackgroundColor: '',
+      cardBackgroundOpacity: 50,
+      debug: false,
       ...CombinedCard.getStubConfig(),
     };
   }
