@@ -12,7 +12,7 @@ export const renderColorTemplate = async (
   const result = computeColor(template) || undefined;
 
   if (result) {
-    logger.debug(`rendered color template as simple color:`, { input: template, output: result });
+    logger.debug(`rendered color string as simple color:`, { input: template, output: result });
     return void onUpdate(result);
   }
 
@@ -21,7 +21,7 @@ export const renderColorTemplate = async (
       const renderedString = result.result?.trim?.();
       const resultColor = renderedString ? computeColor(renderedString) || undefined : undefined;
 
-      logger.debug(`rendered color template as template string:`, {
+      logger.debug(`rendered color string as template:`, {
         input: template,
         intermediate: renderedString,
         output: resultColor,
@@ -33,8 +33,8 @@ export const renderColorTemplate = async (
     }, { template });
 
     return unsubscribe;
-  } catch (e) {
-    logger.error(`failed to render background color template\n${template}\n\n`, e);
+  } catch (error) {
+    logger.error(`failed to render color string:`, { input: template, error });
   }
 
   return;
