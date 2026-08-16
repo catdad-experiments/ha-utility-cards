@@ -193,8 +193,6 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       );
     }
 
-    console.log('bg color', this.renderedCardBackgroundColor);
-
     const styles = loaded ? [
       ...(this._config?.hideBorder ? ['--ha-card-border-width: 0px', '--ha-card-border-color: rgba(0, 0, 0, 0)',] : []),
       ...(this._config?.hideShadow ? ['--ha-card-box-shadow: none'] : []),
@@ -367,7 +365,9 @@ class CombinedCard extends UtilityCard implements LovelaceCard {
       hideRoundedCorners: true,
       hideGap: false,
       themeColor: '',
+      themeColorInputType: 'ui_color',
       cardBackgroundColor: '',
+      cardBackgroundColorInputType: 'ui_color',
       cardBackgroundOpacity: 50,
       debug: false,
       ...CombinedCard.getStubConfig(),

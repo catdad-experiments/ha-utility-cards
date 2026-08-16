@@ -16,7 +16,9 @@ type CustomConfig = {
   hideRoundedCorners?: boolean;
   hideGap?: boolean;
   themeColor?: string;
+  themeColorInputType?: 'ui_color' | 'template';
   cardBackgroundColor?: string;
+  cardBackgroundColorInputType?: 'ui_color' | 'template';
   cardBackgroundOpacity?: number;
   debug?: boolean;
 };
@@ -26,7 +28,7 @@ export type CompleteConfig = CustomConfig & Required<Omit<CustomConfig, 'title'>
 
 const tabs = ['cards', 'settings'] as const;
 
-const schema = [
+const getSchema = (config: Partial<CompleteConfig>) => [
   {
     name: "stackMode",
     selector: {
@@ -53,13 +55,26 @@ const schema = [
       </p>
     </div>`,
     schema: [{
-      name: 'themeColor',
+      name: 'themeColorInputType',
       selector: {
-        ui_color: {
-          include_state: false,
+        select: {
+          options: [
+            { value: "ui_color", label: 'color picker' },
+            { value: "template", label: 'template' }
+          ],
+          orientation: 'horizontal'
         },
       },
-    }],
+    }, {
+        name: 'themeColor',
+        selector: config.themeColorInputType === 'template' ? {
+          template: {}
+        } : {
+          ui_color: {
+            include_state: false,
+          },
+        },
+      }],
   },
   {
     type: 'expandable', name: '', flatten: true, expanded: true,
@@ -73,8 +88,20 @@ const schema = [
       </p>
     </div>`,
     schema: [{
-      name: 'cardBackgroundColor',
+      name: 'cardBackgroundColorInputType',
       selector: {
+        select: {
+          options: [
+            { value: "ui_color", label: 'color picker' },
+            { value: "template", label: 'template' }
+          ],
+        },
+      },
+    }, {
+      name: 'cardBackgroundColor',
+      selector: config.cardBackgroundColorInputType === 'template' ? {
+        template: {}
+      } : {
         ui_color: {
           include_state: false,
         },
@@ -107,7 +134,10 @@ export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: 
     }
 
     private configChanged(newConfig: Config): void {
-      const filterKeys: (keyof CustomConfig)[] = ['hideBorder', 'hideGap', 'hideRoundedCorners', 'hideShadow'];
+      const filterKeys: (keyof CustomConfig)[] = [
+        'hideBorder', 'hideGap', 'hideRoundedCorners', 'hideShadow',
+        'themeColorInputType', 'cardBackgroundColorInputType',
+      ];
 
       // remove values that match the default
       for (const key of filterKeys) {
@@ -174,7 +204,7 @@ export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: 
                   ...completeConfig,
                   ...this._config
                 }}
-                .schema=${schema}
+                .schema=${getSchema(this._config)}
                 .computeLabel=${(element: { name: keyof CustomConfig }) => {
                   return match(element)
                     .with({ name: 'stackMode' }, () => 'Stack mode')
@@ -185,6 +215,7 @@ export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: 
                     .with({ name: 'themeColor' }, () => 'Full theme background color')
                     .with({ name: 'cardBackgroundColor' }, () => 'Card background color')
                     .with({ name: 'cardBackgroundOpacity' }, () => 'Card background opacity')
+                    .with({ name: 'themeColorInputType' }, { name: 'cardBackgroundColorInputType' }, () => 'Color picker type')
                     .with({ name: 'debug' }, () => 'Debug logging')
                     .otherwise(({ name }) => name);
                 }}
@@ -196,8 +227,10 @@ export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: 
                     hideRoundedCorners,
                     hideGap,
                     themeColor,
+                    themeColorInputType,
                     cardBackgroundColor,
                     cardBackgroundOpacity,
+                    cardBackgroundColorInputType,
                     debug
                   } = (ev?.detail?.value || {}) as Config;
 
@@ -209,8 +242,10 @@ export const editorFactory = (NAME: string, stubConfig: Config, completeConfig: 
                     hideRoundedCorners,
                     hideGap,
                     themeColor,
+                    themeColorInputType,
                     cardBackgroundColor,
                     cardBackgroundOpacity,
+                    cardBackgroundColorInputType,
                     debug,
                   });
                 }}
