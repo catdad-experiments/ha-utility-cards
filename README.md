@@ -38,6 +38,12 @@ If this is too undefined for you, you can combine the cards more granularly, in 
 
 ![combined in two groups](https://github.com/catdad-experiments/ha-combined-card/assets/2205537/d8691dd0-e89b-4772-b024-d887670ce365)
 
+You can also use this card to give your combined stack a full color theme, which can even be based on a template string!
+
+![combined card with a full color theme](https://github.com/user-attachments/assets/bec8ebf6-9cde-4060-a442-7d83a093f0cc)
+
+![combined card with a color on only part of the stack](https://github.com/user-attachments/assets/53ac2e2e-522d-4e5a-877e-fdca5f631380)
+
 ## Kiosk Card
 
 A card that will hide the dashboard header bar. I recommend using it with something like [`navbar-card`](https://github.com/joseluis9595/lovelace-navbar-card) so that you can still navigate around your dashboard.
